@@ -7,7 +7,7 @@
 #include "config.h"
 
 void shell_mainloop();
-int parse_builtin(char *const argv[]);
+int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
 void dtmsplit(char *str, const char *delim, char ***array, int *length);
 
@@ -16,6 +16,7 @@ char *ps1;
 char *username;
 char *hostname;
 char *curdir;
+char *homedir;
 
 int main(int argc, char **argv) {
     if ((ps1 = getenv("PS1")) == NULL) {
@@ -37,6 +38,7 @@ int main(int argc, char **argv) {
     strcpy(curdir, getenv("HOME"));
     if (curdir[0] == '\0')
         strcpy(curdir, "/");
+    homedir = strdup(curdir);
 
     chdir(curdir);
 
@@ -83,15 +85,21 @@ void shell_mainloop() {
 
         /* run command */
         int exit_code = 0;
-        switch ((exit_code = parse_builtin(cmd_argv))) {
+        switch ((exit_code = parse_builtin(count, cmd_argv))) {
             case 0x1337:
                 exit_code = spawnwait(cmd_argv);
                 break;
             case 0xDEAD:
                 running = 0;
                 break;
+            case 0x0:
+                break;
+            case 0xAA:
+                fprintf(stderr, "%s: wrong number of arguments!\n", cmd_argv[0]);
+                break;
             default:
                 fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+                break;
         }
 
 #ifdef DEBUG_OUTPUT
@@ -106,9 +114,23 @@ void shell_mainloop() {
  * with the specified name was found
  * returns 0xDEAD for exit
 **/
-int parse_builtin(char *const argv[]) {
-    if (!strcmp(argv[0], "exit"))
-        return 0xDEAD;
+int parse_builtin(int argc, char *const argv[]) {
+    if (!strcmp(argv[0], "exit")) {
+        if (argc == 1)
+            return 0xDEAD;
+        return 0xAA;
+    } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
+        if (argc == 1) {
+            chdir(homedir);
+            strcpy(curdir, homedir);
+            return 0x0;
+        } else if (argc == 2) {
+            chdir(argv[1]);
+            getcwd(curdir, MAXCURDIRLEN);
+            return 0x0;
+        }
+        return 0xAA;
+    }
     return 0x1337;
 }
 
