@@ -69,10 +69,15 @@ void shell_mainloop() {
         for (; command[i] != '\n'; i--) ;
         command[i] = '\0';
 
+#ifdef DEBUG_OUTPUT
+        printf("read line: %s\n", command);
+#endif
+
         /* read command to arg list */
         char **cmd_argv = NULL;
         int count = 0;
         dtmsplit(command, " ", &cmd_argv, &count);
+        cmd_argv[count] = NULL;
 
 #ifdef DEBUG_OUTPUT
         printf("parsed command: ");
@@ -166,7 +171,7 @@ void dtmsplit(char *str, const char *delim, char ***array, int *length) {
     /* get the first token */
     token = strtok(str, delim);
     while( token != NULL ) {
-        res = (char **) realloc(res, (i + 1) * sizeof(char *));
+        res = (char **) realloc(res, (i + 2) * sizeof(char *));
         res[i] = token;
         i++;
         token = strtok(NULL, delim);
