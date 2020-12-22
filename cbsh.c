@@ -6,6 +6,11 @@
 
 #include "config.h"
 
+#ifdef USE_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif
+
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
@@ -56,18 +61,31 @@ void shell_mainloop() {
     int running = 1;
 
     char *command = NULL;
-    size_t len = 0;
-    int read;
+#ifdef USE_READLINE
+    size_t maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
+#else
+    size_t len = 0, maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
+#endif
+    char *prompt = malloc(sizeof(char) * maxprompt);
+#ifdef USE_READLINE
+    int i;
+#else
+    int read, i;
+#endif
 
     while (running) {
-        /* print promt & read command */
+#ifdef USE_READLINE
+        snprintf(prompt, maxprompt, ps1, username, hostname, curdir);
+        command = readline(prompt);
+#else
+        /* print promt & read command (libc approach) */
         printf(ps1, username, hostname, curdir);
         read = getline(&command, &len, stdin);
 
         /* strip newline */
-        int i = read;
-        for (; command[i] != '\n'; i--) ;
+        for (i = read; command[i] != '\n'; i--) ;
         command[i] = '\0';
+#endif
 
 #ifdef DEBUG_OUTPUT
         printf("read line: %s\n", command);

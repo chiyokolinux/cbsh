@@ -8,8 +8,12 @@ this is a very simple shell,
 created to serve as a simple in-between shell
 until kaigara is ready.
 
-i built it in a few days, so don't expect any
+I built it in an afternoon, so don't expect any
 of that full POSIX-compliance or stability
+
+dependencies:
+ - readline (optional)
+    -> see USE_READLINE flag in config.h
 
 build & install:
 $ make

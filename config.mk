@@ -9,4 +9,4 @@ LD = $(CC)
 CPPFLAGS =
 CFLAGS   = -Wextra -Wall -Os
 LDFLAGS  = -s
-LDLIBS   = 
+LDLIBS   = -lreadline
