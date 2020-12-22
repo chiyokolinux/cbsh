@@ -1,7 +1,7 @@
-ccsh
+cbsh
 ----
 
-ccsh - custom c shell
+ccsh - chibi shell
 a simple shell, written in c
 
 this is a very simple shell,
@@ -14,3 +14,9 @@ of that full POSIX-compliance or stability
 build & install:
 $ make
 # make install
+
+config:
+ - PS1 format
+    - %1$s is username
+    - %2$s is hostname
+    - %3$s is current dir
