@@ -2,7 +2,7 @@ include config.mk
 
 PROGBIN = $(NAME)
 
-PROGOBJ = ccsh.o
+PROGOBJ = cbsh.o
 
 OBJECTS = $(PROGOBJ)
 HEADERS = config.h

@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
 
     shell_mainloop();
 
+    printf("bye!\n");
     return 0;
 }
 
@@ -82,8 +83,16 @@ void shell_mainloop() {
 
         /* run command */
         int exit_code = 0;
-        if ((exit_code = parse_builtin(cmd_argv)) == 0x1337)
-            exit_code = spawnwait(cmd_argv);
+        switch ((exit_code = parse_builtin(cmd_argv))) {
+            case 0x1337:
+                exit_code = spawnwait(cmd_argv);
+                break;
+            case 0xDEAD:
+                running = 0;
+                break;
+            default:
+                fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+        }
 
 #ifdef DEBUG_OUTPUT
         printf("program exited with exit code %d\n", exit_code);
@@ -95,8 +104,11 @@ void shell_mainloop() {
  * parses a builtin function
  * returns 0x1337 if no builtin function
  * with the specified name was found
+ * returns 0xDEAD for exit
 **/
 int parse_builtin(char *const argv[]) {
+    if (!strcmp(argv[0], "exit"))
+        return 0xDEAD;
     return 0x1337;
 }
 
