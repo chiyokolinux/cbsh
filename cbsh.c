@@ -4,12 +4,9 @@
 #include <string.h>
 #include <sys/wait.h>
 
-#include "config.h"
+#include "linenoise/linenoise.h"
 
-#ifdef USE_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
+#include "config.h"
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -24,11 +21,13 @@ char *curdir;
 char *homedir;
 
 int main(int argc, char **argv) {
+    /* fetch prompt */
     if ((ps1 = getenv("PS1")) == NULL) {
         ps1 = malloc(sizeof(char) * (strlen(DEFAULTPROMPT) + 1));
         strcpy(ps1, DEFAULTPROMPT);
     }
 
+    /* fetch "environment" variables */
     username = getenv("USER");
     if (!username) {
         username = malloc(sizeof(char) * 6);
@@ -45,9 +44,23 @@ int main(int argc, char **argv) {
         strcpy(curdir, "/");
     homedir = strdup(curdir);
 
+    /* go to home directory */
     chdir(curdir);
 
+    /* load history if HOME was found */
+    linenoiseHistorySetMaxLen(HISTSIZE);
+    if (strcmp(homedir, "/"))
+        linenoiseHistoryLoad(".cbsh_history");
+    else
+        fprintf(stderr, "warning: could not fetch home directory, disabling history.\n");
+
+    /* run the shell's mainloop */
     shell_mainloop();
+
+    /* save history file */
+    chdir(homedir);
+    if (strcmp(homedir, "/"))
+        linenoiseHistorySave(".cbsh_history");
 
     printf("bye!\n");
     return 0;
@@ -60,36 +73,16 @@ int main(int argc, char **argv) {
 void shell_mainloop() {
     int running = 1;
 
-    char *command = NULL;
-#ifdef USE_READLINE
+    char *command = NULL, *histcmd = NULL;
     size_t maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
-#else
-    size_t len = 0, maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
-#endif
     char *prompt = malloc(sizeof(char) * maxprompt);
-#ifdef USE_READLINE
     int i;
-#else
-    int read, i;
-#endif
 
     while (running) {
-#ifdef USE_READLINE
+        /* print promt & read command (liblinenoise approach) */
         snprintf(prompt, maxprompt, ps1, username, hostname, curdir);
-        command = readline(prompt);
-#else
-        /* print promt & read command (libc approach) */
-        printf(ps1, username, hostname, curdir);
-        read = getline(&command, &len, stdin);
-
-        /* strip newline */
-        for (i = read; command[i] != '\n'; i--) ;
-        command[i] = '\0';
-#endif
-
-#ifdef DEBUG_OUTPUT
-        printf("read line: %s\n", command);
-#endif
+        command = linenoise(prompt);
+        histcmd = strdup(command);
 
         /* read command to arg list */
         char **cmd_argv = NULL;
@@ -108,6 +101,7 @@ void shell_mainloop() {
 
         /* run command */
         int exit_code = 0;
+        int add_to_history = 1;
         switch ((exit_code = parse_builtin(count, cmd_argv))) {
             case 0x1337:
                 exit_code = spawnwait(cmd_argv);
@@ -122,12 +116,21 @@ void shell_mainloop() {
                 break;
             default:
                 fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+                add_to_history = 0;
                 break;
         }
+
+        /* add command to history */
+        if (add_to_history)
+            linenoiseHistoryAdd(histcmd);
 
 #ifdef DEBUG_OUTPUT
         printf("program exited with exit code %d\n", exit_code);
 #endif
+
+        /* free stuff that is no longer used */
+        free(command);
+        free(histcmd);
     }
 }
 

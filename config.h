@@ -3,10 +3,10 @@
 
 /* #define MAXLINELEN      1024 */
 #define MAXCURDIRLEN    4096
+
 #define DEFAULTPROMPT   "%1$s@%2$s:%3$s$ "
+#define HISTSIZE        1024
 
 #define DEBUG_OUTPUT
-
-#define USE_READLINE
 
 #endif /* CONFIG_H */
