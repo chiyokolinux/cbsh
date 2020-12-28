@@ -1,6 +1,9 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <string.h>
 #include <sys/wait.h>
 
@@ -11,7 +14,11 @@
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
-void dtmsplit(char *str, const char *delim, char ***array, int *length);
+void dtmsplit(char *str, char *delim, char ***array, int *length);
+void buildhints();
+void buildcommands();
+int startswith(const char *str, const char *prefix);
+char *hints(const char *buf, int *color, int *bold);
 
 /* "environment" variables */
 char *ps1;
@@ -19,6 +26,9 @@ char *username;
 char *hostname;
 char *curdir;
 char *homedir;
+
+char **commands = NULL;
+char **files = NULL;
 
 int main(int argc, char **argv) {
     /* fetch prompt */
@@ -53,6 +63,11 @@ int main(int argc, char **argv) {
         linenoiseHistoryLoad(".cbsh_history");
     else
         fprintf(stderr, "warning: could not fetch home directory, disabling history.\n");
+
+    /* init tab complete & hints */
+    buildhints();
+    buildcommands();
+    linenoiseSetHintsCallback(hints);
 
     /* run the shell's mainloop */
     shell_mainloop();
@@ -148,10 +163,12 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
         if (argc == 1) {
             chdir(homedir);
+            buildhints();
             strcpy(curdir, homedir);
             return 0x0;
         } else if (argc == 2) {
             chdir(argv[1]);
+            buildhints();
             getcwd(curdir, MAXCURDIRLEN);
             return 0x0;
         }
@@ -184,7 +201,7 @@ int spawnwait(char *const argv[]) {
 /**
  * splits str at delim into array with length elements
 **/
-void dtmsplit(char *str, const char *delim, char ***array, int *length) {
+void dtmsplit(char *str, char *delim, char ***array, int *length) {
     int i = 0;
     char *token;
     char **res = (char **) malloc(0 * sizeof(char *));
@@ -199,4 +216,128 @@ void dtmsplit(char *str, const char *delim, char ***array, int *length) {
     }
     *array = res;
     *length = i;
+}
+
+/* function to build the hints array */
+void buildhints() {
+    struct dirent *dent;
+    DIR *dir = opendir(".");
+    if (dir == NULL) {
+        perror("opendir");
+    }
+
+    /* prevent memory leak when chdir'ing a lot */
+    if (files != NULL) {
+        int fileidx = 0;
+        while (files[fileidx] != NULL) {
+            free(files[fileidx++]);
+        }
+        free(files);
+    }
+
+    int alloc_current = 128, alloc_step = 64;
+    files = malloc(sizeof(char *) * alloc_current);
+
+    int dent_i = 0;
+    while ((dent = readdir(dir)) != NULL) {
+        files[dent_i++] = strdup(dent->d_name);
+        if (dent_i > alloc_current) {
+            alloc_current += alloc_step;
+            files = realloc(files, sizeof(char *) * alloc_current);
+        }
+    }
+    files[dent_i] = NULL;
+
+    closedir(dir);
+}
+
+/* function to build the commands array */
+void buildcommands() {
+    char *pathent = getenv("PATH");
+    pathent = strdup(pathent); /* this fixes a bug where we would overwrite PATH in the environment */
+    if (!pathent) {
+        pathent = malloc(sizeof(char) * 14);
+        strcpy(pathent, "/usr/bin:/bin");
+    }
+
+    /* get array of dirs in PATH */
+    char **pathdirs = NULL;
+    int count = 0;
+    dtmsplit(pathent, ":", &pathdirs, &count);
+    pathdirs[count] = NULL;
+
+    /* higher alloc step because PATH will probably contain a lot more files than your average directory */
+    int alloc_current = 256, alloc_step = 128, alloc_total = 0;
+    commands = malloc(sizeof(char *) * alloc_current);
+
+    /* iterate though every dir in path */
+    int pathidx = 0;
+    while (pathdirs[pathidx] != NULL) {
+        struct dirent *dent;
+        DIR *dir = opendir(pathdirs[pathidx]);
+        if (dir == NULL) {
+            perror("opendir");
+            fprintf(stderr, "\npath: %s\n", pathdirs[pathidx]);
+        }
+
+        while ((dent = readdir(dir)) != NULL) {
+            commands[alloc_total++] = strdup(dent->d_name);
+            if (alloc_total > alloc_current) {
+                alloc_current += alloc_step;
+                commands = realloc(commands, sizeof(char *) * alloc_current);
+            }
+            /* only read first 32768 files (keep mem footprint little) */
+            if (alloc_total > 32768) {
+                fprintf(stderr, "WARN: too big alloc because too many files in PATH\n");
+                return;
+            }
+        }
+
+        closedir(dir);
+        pathidx++;
+    }
+    commands[alloc_total] = NULL;
+}
+
+/* check if str starts with prefix */
+int startswith(const char *str, const char *prefix) {
+    return strncmp(prefix, str, strlen(prefix)) == 0;
+}
+
+/* hints */
+char *hints(const char *buf, int *color, int *bold) {
+    /* finds the last element of buf, delimited by spaces */
+    char *lastarg = buf, *lastbuf = buf;
+    int bufidx = 0;
+    while ((lastbuf = strcasestr(lastbuf, " ")) != NULL) {
+        lastarg = ++lastbuf;
+        bufidx++;
+    }
+
+    if (lastarg[0] == '\0')
+        return NULL;
+
+    /* if we're in the first argument of a command, also autocomplete from the list of commands in PATH */
+    if (bufidx == 0) {
+        int cmdidx = 0;
+        while (commands[cmdidx] != NULL) {
+            if (startswith(commands[cmdidx], lastarg)) {
+                *color = 32;
+                *bold = 0;
+                return (commands[cmdidx] + strlen(lastarg));
+            }
+            cmdidx++;
+        }
+    }
+
+    int fileidx = 0;
+    while (files[fileidx] != NULL) {
+        if (startswith(files[fileidx], lastarg)) {
+            *color = 35;
+            *bold = 0;
+            return (files[fileidx] + strlen(lastarg));
+        }
+        fileidx++;
+    }
+    return NULL;
 }
