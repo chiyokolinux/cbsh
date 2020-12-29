@@ -28,6 +28,8 @@ $(UTF8OBJ): linenoise/encodings/utf8.c linenoise/encodings/utf8.h
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f $(PROGBIN) $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	sed "s/1.0/$(VERSION)/g" < $(NAME).1 > $(DESTDIR)$(MANPREFIX)/man1/$(NAME).1
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGBIN)
