@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#define NUM_BUILTINS    3
+
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
@@ -20,6 +22,7 @@ void buildhints();
 void buildcommands();
 int startswith(const char *str, const char *prefix);
 char *hints(const char *buf, int *color, int *bold);
+void completion(const char *buf, linenoiseCompletions *lc);
 
 /* "environment" variables */
 char *ps1;
@@ -71,6 +74,7 @@ int main(int argc, char **argv) {
     /* init tab complete & hints */
     buildhints();
     buildcommands();
+    linenoiseSetCompletionCallback(completion);
     linenoiseSetHintsCallback(hints);
 
     /* run the shell's mainloop */
@@ -300,6 +304,17 @@ void buildcommands() {
         closedir(dir);
         pathidx++;
     }
+
+    /* add builtins */
+    if (alloc_total + NUM_BUILTINS > alloc_current) {
+        alloc_current += NUM_BUILTINS;
+        commands = realloc(commands, sizeof(char *) * alloc_current);
+    }
+    commands[alloc_total++] = "cd";
+    commands[alloc_total++] = "chdir";
+    commands[alloc_total++] = "exit";
+
+    /* corrently terminate array */
     commands[alloc_total] = NULL;
 }
 
@@ -318,8 +333,10 @@ char *hints(const char *buf, int *color, int *bold) {
         bufidx++;
     }
 
-    if (lastarg[0] == '\0')
+    if (lastarg[0] == '\0') {
+        free(lastbuf);
         return NULL;
+    }
 
     /* if we're in the first argument of a command, also autocomplete from the list of commands in PATH */
     if (bufidx == 0) {
@@ -347,4 +364,43 @@ char *hints(const char *buf, int *color, int *bold) {
     }
     free(lastbuf);
     return NULL;
+}
+
+/* tab auto-complete */
+void completion(const char *buf, linenoiseCompletions *lc) {
+    /* finds the last element of buf, delimited by spaces */
+    char *firstbuf = strdup(buf), *lastbuf = firstbuf, *lastarg = firstbuf;
+    int bufidx = 0;
+    while ((lastbuf = strcasestr(lastbuf, " ")) != NULL) {
+        lastarg = ++lastbuf;
+        bufidx++;
+    }
+
+    if (lastarg[0] == '\0') {
+        free(firstbuf);
+        return;
+    }
+
+    /* if we're in the first argument of a command, also autocomplete from the list of commands in PATH */
+    if (bufidx == 0) {
+        int cmdidx = 0;
+        while (commands[cmdidx] != NULL) {
+            if (startswith(commands[cmdidx], lastarg)) {
+                linenoiseAddCompletion(lc, commands[cmdidx]);
+            }
+            cmdidx++;
+        }
+    }
+
+    int fileidx = 0;
+    while (files[fileidx] != NULL) {
+        if (startswith(files[fileidx], lastarg)) {
+            char *tmp = strdup(firstbuf);
+            strcat(tmp, files[fileidx] + strlen(lastarg));
+            linenoiseAddCompletion(lc, tmp);
+            free(tmp);
+        }
+        fileidx++;
+    }
+    free(firstbuf);
 }
