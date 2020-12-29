@@ -311,7 +311,7 @@ int startswith(const char *str, const char *prefix) {
 /* hints */
 char *hints(const char *buf, int *color, int *bold) {
     /* finds the last element of buf, delimited by spaces */
-    char *lastarg = buf, *lastbuf = buf;
+    char *lastbuf = strdup(buf), *lastarg = lastbuf;
     int bufidx = 0;
     while ((lastbuf = strcasestr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
@@ -328,6 +328,7 @@ char *hints(const char *buf, int *color, int *bold) {
             if (startswith(commands[cmdidx], lastarg)) {
                 *color = 32;
                 *bold = 0;
+                free(lastbuf);
                 return (commands[cmdidx] + strlen(lastarg));
             }
             cmdidx++;
@@ -339,9 +340,11 @@ char *hints(const char *buf, int *color, int *bold) {
         if (startswith(files[fileidx], lastarg)) {
             *color = 35;
             *bold = 0;
+            free(lastbuf);
             return (files[fileidx] + strlen(lastarg));
         }
         fileidx++;
     }
+    free(lastbuf);
     return NULL;
 }
