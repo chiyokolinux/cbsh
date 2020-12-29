@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 
 #include "linenoise/linenoise.h"
+#include "linenoise/encodings/utf8.h"
 
 #include "config.h"
 
@@ -56,6 +57,9 @@ int main(int argc, char **argv) {
 
     /* go to home directory */
     chdir(curdir);
+
+    /* init UTF-8 support */
+    linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
 
     /* load history if HOME was found */
     linenoiseHistorySetMaxLen(HISTSIZE);

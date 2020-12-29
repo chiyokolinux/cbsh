@@ -4,9 +4,10 @@ PROGBIN = $(NAME)
 
 PROGOBJ = cbsh.o
 LINEOBJ = linenoise.o
+UTF8OBJ = utf8.o
 
-OBJECTS = $(LINEOBJ) $(PROGOBJ)
-HEADERS = config.h linenoise/linenoise.h
+OBJECTS = $(LINEOBJ) $(UTF8OBJ) $(PROGOBJ)
+HEADERS = config.h linenoise/linenoise.h linenoise/encodings/utf8.h
 
 all: $(PROGBIN)
 
@@ -16,6 +17,9 @@ $(PROGBIN): $(OBJECTS)
 $(PROGOBJ): $(HEADERS)
 
 $(LINEOBJ): linenoise/linenoise.c linenoise/linenoise.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(UTF8OBJ): linenoise/encodings/utf8.c linenoise/encodings/utf8.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.c %.h
