@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -23,6 +21,7 @@ void buildcommands();
 int startswith(const char *str, const char *prefix);
 char *hints(const char *buf, int *color, int *bold);
 void completion(const char *buf, linenoiseCompletions *lc);
+int panic(const char *error, const char *details);
 
 /* "environment" variables */
 char *ps1;
@@ -34,7 +33,43 @@ char *homedir;
 char **commands = NULL;
 char **files = NULL;
 
+/**
+ * flags that control cbsh's behaviour
+ * example length is 16bit, but we can
+ * expand to 32bit if needed.
+ *
+ * |- [reserved for future use]
+ * ||- [reserved for future use]
+ * |||- [reserved for future use]
+ * ||||- [reserved for future use]
+ * |||| |- [reserved for future use]
+ * |||| ||- [reserved for future use]
+ * |||| |||- history disable
+ * 0000 0000- multiline mode
+**/
+unsigned int flags = 0;
+
 int main(int argc, char **argv) {
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-')
+            return panic("unrecognized option", "files are not supported yet.");
+
+        switch (argv[i][1]) {
+            case 'm':
+                flags |= 1 << 0;
+                break;
+            case 'H':
+                flags |= 1 << 1;
+                break;
+            case 'v':
+                printf("cbsh - version 0.1\n");
+                return 0;
+            default:
+                return panic("unrecognized option", argv[i]);
+        }
+    }
+
+
     /* fetch prompt */
     if ((ps1 = getenv("PS1")) == NULL) {
         ps1 = malloc(sizeof(char) * (strlen(DEFAULTPROMPT) + 1));
@@ -64,12 +99,17 @@ int main(int argc, char **argv) {
     /* init UTF-8 support */
     linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
 
+    /* multiline support, if requested */
+    linenoiseSetMultiLine(flags & 1 << 0);
+
     /* load history if HOME was found */
     linenoiseHistorySetMaxLen(HISTSIZE);
-    if (strcmp(homedir, "/"))
-        linenoiseHistoryLoad(".cbsh_history");
-    else
+    if (strcmp(homedir, "/")) {
+        if (!(flags & 1 << 1))
+            linenoiseHistoryLoad(".cbsh_history");
+    } else {
         fprintf(stderr, "warning: could not fetch home directory, disabling history.\n");
+    }
 
     /* init tab complete & hints */
     buildhints();
@@ -82,7 +122,7 @@ int main(int argc, char **argv) {
 
     /* save history file */
     chdir(homedir);
-    if (strcmp(homedir, "/"))
+    if (strcmp(homedir, "/") && !(flags & 1 << 1))
         linenoiseHistorySave(".cbsh_history");
 
     printf("bye!\n");
@@ -328,7 +368,7 @@ char *hints(const char *buf, int *color, int *bold) {
     /* finds the last element of buf, delimited by spaces */
     char *lastbuf = strdup(buf), *lastarg = lastbuf;
     int bufidx = 0;
-    while ((lastbuf = strcasestr(lastbuf, " ")) != NULL) {
+    while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
     }
@@ -371,7 +411,7 @@ void completion(const char *buf, linenoiseCompletions *lc) {
     /* finds the last element of buf, delimited by spaces */
     char *firstbuf = strdup(buf), *lastbuf = firstbuf, *lastarg = firstbuf;
     int bufidx = 0;
-    while ((lastbuf = strcasestr(lastbuf, " ")) != NULL) {
+    while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
     }
@@ -403,4 +443,12 @@ void completion(const char *buf, linenoiseCompletions *lc) {
         fileidx++;
     }
     free(firstbuf);
+}
+
+/* print error msg and return non-zero exit value */
+int panic(const char *error, const char *details) {
+    fprintf(stderr, "\nerror: %s\n", error);
+    if (details != NULL)
+        fprintf(stderr, "   %s\n", details);
+    return -1;
 }
