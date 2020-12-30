@@ -194,6 +194,7 @@ void shell_mainloop() {
         /* free stuff that is no longer used */
         free(command);
         free(histcmd);
+        free(*cmd_argv);
     }
 }
 
