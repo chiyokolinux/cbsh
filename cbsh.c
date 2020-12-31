@@ -194,7 +194,7 @@ void shell_mainloop() {
         /* free stuff that is no longer used */
         free(command);
         free(histcmd);
-        free(*cmd_argv);
+        free(cmd_argv);
     }
 }
 
@@ -436,7 +436,8 @@ void completion(const char *buf, linenoiseCompletions *lc) {
     int fileidx = 0;
     while (files[fileidx] != NULL) {
         if (startswith(files[fileidx], lastarg)) {
-            char *tmp = strdup(firstbuf);
+            char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(files[fileidx]) - strlen(lastarg)));
+            strcpy(tmp, firstbuf);
             strcat(tmp, files[fileidx] + strlen(lastarg));
             linenoiseAddCompletion(lc, tmp);
             free(tmp);
