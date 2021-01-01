@@ -153,7 +153,7 @@ void shell_mainloop() {
             parse_next = !(parse_pos == parse_pos_max);
 
             /* parse next command */
-            command_token = command + parse_pos + (parse_pos != 0);
+            command_token = command + parse_pos + (parse_pos != 0) - ((parse_pos == parse_pos_max) * 2);
             for (; parse_pos < parse_pos_max; parse_pos++) {
                 if (command[parse_pos] == ';') {
                     command[parse_pos] = '\0';
