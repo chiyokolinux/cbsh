@@ -16,7 +16,7 @@ void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
 void dtmsplit(char *str, char *delim, char ***array, int *length);
-void buildhints();
+void buildhints(const char *targetdir);
 void buildcommands();
 int startswith(const char *str, const char *prefix);
 char *hints(const char *buf, int *color, int *bold);
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     }
 
     /* init tab complete & hints */
-    buildhints();
+    buildhints(".");
     buildcommands();
     linenoiseSetCompletionCallback(completion);
     linenoiseSetHintsCallback(hints);
@@ -134,67 +134,100 @@ int main(int argc, char **argv) {
  * parses, runs, etc. until exit is called
 **/
 void shell_mainloop() {
-    int running = 1;
+    int running = 1, parse_next = 1;
 
-    char *command = NULL, *histcmd = NULL;
+    char *command = NULL, *command_token = NULL;
     size_t maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
     char *prompt = malloc(sizeof(char) * maxprompt);
-    int i;
+    int i, parse_pos = 0, parse_pos_max = 0, exit_expect = -1;
 
     while (running) {
         /* print promt & read command (liblinenoise approach) */
         snprintf(prompt, maxprompt, ps1, username, hostname, curdir);
         command = linenoise(prompt);
-        histcmd = strdup(command);
+        linenoiseHistoryAdd(command);
 
-        /* read command to arg list */
-        char **cmd_argv = NULL;
-        int count = 0;
-        dtmsplit(command, " ", &cmd_argv, &count);
-        cmd_argv[count] = NULL;
+        parse_next = 1, parse_pos = 0, parse_pos_max = strlen(command) + 1, exit_expect = -1;
 
-#ifdef DEBUG_OUTPUT
-        printf("parsed command: ");
-        for (i = 0; i < count; i++) {
-            printf("[%s]", cmd_argv[i]);
-        }
-        printf("\n");
-        fflush(stdout);
-#endif
+        while (parse_next) {
+            parse_next = !(parse_pos == parse_pos_max);
 
-        /* run command */
-        int exit_code = 0;
-        int add_to_history = 1;
-        switch ((exit_code = parse_builtin(count, cmd_argv))) {
-            case 0x1337:
-                exit_code = spawnwait(cmd_argv);
-                break;
-            case 0xDEAD:
-                running = 0;
-                break;
-            case 0x0:
-                break;
-            case 0xAA:
-                fprintf(stderr, "%s: wrong number of arguments!\n", cmd_argv[0]);
-                break;
-            default:
-                fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
-                add_to_history = 0;
-                break;
-        }
+            /* parse next command */
+            command_token = command + parse_pos + (parse_pos != 0);
+            for (; parse_pos < parse_pos_max; parse_pos++) {
+                if (command[parse_pos] == ';') {
+                    command[parse_pos] = '\0';
+                    exit_expect = -1;
+                    break;
+                } else if (command[parse_pos - 1] == '&' && command[parse_pos] == '&') {
+                    command[parse_pos - 1] = '\0';
+                    exit_expect = 0;
+                    break;
+                } else if (command[parse_pos - 1] == '|' && command[parse_pos] == '|') {
+                    command[parse_pos - 1] = '\0';
+                    exit_expect = 1;
+                    break;
+                }
+            }
 
-        /* add command to history */
-        if (add_to_history)
-            linenoiseHistoryAdd(histcmd);
+            /* remove leading spaces */
+            while (command_token[0] == ' ') {
+                command_token++;
+            }
+
+            /* allow semicolon at end of last command */
+            if (command_token[0] == '\0')
+                break;
+
+            /* read command to arg list */
+            char **cmd_argv = NULL;
+            int count = 0;
+            dtmsplit(command_token, " ", &cmd_argv, &count);
+            cmd_argv[count] = NULL;
 
 #ifdef DEBUG_OUTPUT
-        printf("program exited with exit code %d\n", exit_code);
+            printf("parsed command: ");
+            for (i = 0; i < count; i++) {
+                printf("[%s]", cmd_argv[i]);
+            }
+            printf("\n");
+            fflush(stdout);
 #endif
+
+            /* run command */
+            int exit_code = 0;
+            switch ((exit_code = parse_builtin(count, cmd_argv))) {
+                case 0x1337:
+                    exit_code = spawnwait(cmd_argv);
+                    break;
+                case 0xDEAD:
+                    running = 0;
+                    break;
+                case 0x0:
+                    break;
+                case 0xAA:
+                    fprintf(stderr, "%s: wrong number of arguments!\n", cmd_argv[0]);
+                    break;
+                default:
+                    fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+                    break;
+            }
+
+            if (exit_expect == 0 && exit_code != 0)
+                parse_next = 0;
+            else if (exit_expect == 1 && exit_code == 0)
+                parse_next = 0;
+
+#ifdef DEBUG_OUTPUT
+            printf("program exited with exit code %d\n", exit_code);
+#endif
+
+            /* free stuff */
+            free(cmd_argv);
+        }
 
         /* free stuff that is no longer used */
         free(command);
-        free(histcmd);
-        free(cmd_argv);
     }
 }
 
@@ -212,12 +245,12 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
         if (argc == 1) {
             chdir(homedir);
-            buildhints();
+            buildhints(".");
             strcpy(curdir, homedir);
             return 0x0;
         } else if (argc == 2) {
             chdir(argv[1]);
-            buildhints();
+            buildhints(".");
             getcwd(curdir, MAXCURDIRLEN);
             return 0x0;
         }
@@ -268,9 +301,9 @@ void dtmsplit(char *str, char *delim, char ***array, int *length) {
 }
 
 /* function to build the hints array */
-void buildhints() {
+void buildhints(char const *targetdir) {
     struct dirent *dent;
-    DIR *dir = opendir(".");
+    DIR *dir = opendir(targetdir);
     if (dir == NULL) {
         perror("opendir");
     }
