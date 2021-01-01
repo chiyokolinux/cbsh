@@ -161,12 +161,20 @@ void shell_mainloop() {
                     break;
                 } else if (command[parse_pos - 1] == '&' && command[parse_pos] == '&') {
                     command[parse_pos - 1] = '\0';
-                    exit_expect = 0;
-                    break;
+                    if (exit_expect == 3) {
+                        command_token = command + parse_pos + (parse_pos != 0);
+                    } else {
+                        exit_expect = 0;
+                        break;
+                    }
                 } else if (command[parse_pos - 1] == '|' && command[parse_pos] == '|') {
                     command[parse_pos - 1] = '\0';
-                    exit_expect = 1;
-                    break;
+                    if (exit_expect == 2) {
+                        command_token = command + parse_pos + (parse_pos != 0);
+                    } else {
+                        exit_expect = 1;
+                        break;
+                    }
                 }
             }
 
@@ -214,9 +222,9 @@ void shell_mainloop() {
             }
 
             if (exit_expect == 0 && exit_code != 0)
-                parse_next = 0;
+                exit_expect = 2;
             else if (exit_expect == 1 && exit_code == 0)
-                parse_next = 0;
+                exit_expect = 3;
 
 #ifdef DEBUG_OUTPUT
             printf("program exited with exit code %d\n", exit_code);
