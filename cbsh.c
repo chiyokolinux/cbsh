@@ -139,7 +139,7 @@ void shell_mainloop() {
     char *command = NULL, *command_token = NULL;
     size_t maxprompt = strlen(DEFAULTPROMPT) + strlen(username) + strlen(hostname) + MAXCURDIRLEN;
     char *prompt = malloc(sizeof(char) * maxprompt);
-    int i, parse_pos = 0, parse_pos_max = 0, exit_expect = -1;
+    int i, parse_pos = 0, parse_pos_max = 0, exit_expect = -1, exit_expect_satisfy = 0;
 
     while (running) {
         /* print promt & read command (liblinenoise approach) */
@@ -147,7 +147,7 @@ void shell_mainloop() {
         command = linenoise(prompt);
         linenoiseHistoryAdd(command);
 
-        parse_next = 1, parse_pos = 0, parse_pos_max = strlen(command) + 1, exit_expect = -1;
+        parse_next = 1, parse_pos = 0, parse_pos_max = strlen(command) + 1, exit_expect = -1, exit_expect_satisfy = 0;
 
         while (parse_next) {
             parse_next = !(parse_pos == parse_pos_max);
@@ -159,24 +159,28 @@ void shell_mainloop() {
                     command[parse_pos] = '\0';
                     exit_expect = -1;
                     break;
+                } else if (parse_pos == 0) {
+                    continue;
                 } else if (command[parse_pos - 1] == '&' && command[parse_pos] == '&') {
                     command[parse_pos - 1] = '\0';
-                    if (exit_expect == 3) {
-                        command_token = command + parse_pos + (parse_pos != 0);
-                    } else {
+//                    if (exit_expect == 3) {
+//                        command_token = command + parse_pos + (parse_pos != 0);
+//                    } else {
                         exit_expect = 0;
                         break;
-                    }
+//                    }
                 } else if (command[parse_pos - 1] == '|' && command[parse_pos] == '|') {
                     command[parse_pos - 1] = '\0';
-                    if (exit_expect == 2) {
-                        command_token = command + parse_pos + (parse_pos != 0);
-                    } else {
+//                    if (exit_expect == 2) {
+//                    } else {
                         exit_expect = 1;
                         break;
-                    }
+//                    }
                 }
             }
+
+            if (exit_expect_satisfy & (1 << 1))
+                command_token = command + parse_pos + (parse_pos != 0)  - ((parse_pos == parse_pos_max) * 2);
 
             /* remove leading spaces */
             while (command_token[0] == ' ') {
@@ -222,9 +226,11 @@ void shell_mainloop() {
             }
 
             if (exit_expect == 0 && exit_code != 0)
-                exit_expect = 2;
+                exit_expect_satisfy = 2;
             else if (exit_expect == 1 && exit_code == 0)
-                exit_expect = 3;
+                exit_expect_satisfy = 3;
+            else
+                exit_expect_satisfy = 0;
 
 #ifdef DEBUG_OUTPUT
             printf("program exited with exit code %d\n", exit_code);
