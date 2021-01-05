@@ -158,29 +158,23 @@ void shell_mainloop() {
                 if (command[parse_pos] == ';') {
                     command[parse_pos] = '\0';
                     exit_expect = -1;
-                    break;
                 } else if (parse_pos == 0) {
                     continue;
                 } else if (command[parse_pos - 1] == '&' && command[parse_pos] == '&') {
                     command[parse_pos - 1] = '\0';
-//                    if (exit_expect == 3) {
-//                        command_token = command + parse_pos + (parse_pos != 0);
-//                    } else {
-                        exit_expect = 0;
-                        break;
-//                    }
+                    exit_expect = 0;
                 } else if (command[parse_pos - 1] == '|' && command[parse_pos] == '|') {
                     command[parse_pos - 1] = '\0';
-//                    if (exit_expect == 2) {
-//                    } else {
-                        exit_expect = 1;
-                        break;
-//                    }
+                    exit_expect = 1;
+                } else {
+                    continue;
                 }
-            }
 
-            if (exit_expect_satisfy & (1 << 1))
-                command_token = command + parse_pos + (parse_pos != 0)  - ((parse_pos == parse_pos_max) * 2);
+                if (exit_expect_satisfy & (1 << 1)) {
+                    command_token = command + parse_pos + (parse_pos != 0)  - ((parse_pos == parse_pos_max) * 2);
+                }
+                break;
+            }
 
             /* remove leading spaces */
             while (command_token[0] == ' ') {

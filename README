@@ -12,8 +12,7 @@ I built it in an afternoon, so don't expect any
 of that full POSIX-compliance or stability
 
 dependencies:
- - readline (optional)
-    -> see USE_READLINE flag in config.h
+ - linenoise (shipped as submodule)
 
 build & install:
 $ make
