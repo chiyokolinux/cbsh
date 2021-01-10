@@ -33,6 +33,7 @@ install: all
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGBIN)
+	rm -f $(DESTDIR)$(MANPREFIX)/man1/$(NAME).1
 
 dist: clean
 	mkdir -p $(NAME)-$(VERSION)
