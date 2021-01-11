@@ -37,7 +37,7 @@ uninstall:
 
 dist: clean
 	mkdir -p $(NAME)-$(VERSION)
-	cp -f Makefile README config.mk *.c *.h $(NAME)-$(VERSION)
+	cp -f Makefile README config.mk *.c *.h cbsh.1 $(NAME)-$(VERSION)
 	cp -f linenoise/linenoise.c linenoise/linenoise.h linenoise/LICENSE $(NAME)-$(VERSION)
 	cp -f linenoise/encodings/utf8.c linenoise/encodings/utf8.h $(NAME)-$(VERSION)
 	tar -cf $(NAME)-$(VERSION).tar $(NAME)-$(VERSION)
