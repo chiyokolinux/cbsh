@@ -415,6 +415,16 @@ char *hints(const char *buf, int *color, int *bold) {
     while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
+        if (strlen(lastarg) < 2)
+            continue;
+        if (!strncmp(lastarg, "&& ", 3) || !strncmp(lastarg, "|| ", 3)) {
+            bufidx = -1;
+        } else if (lastarg[0] == ';') {
+            bufidx = -(lastarg[1] == ' ');
+            lastarg++;
+        } else if (*(lastarg - 2) == ';') {
+            bufidx = 0;
+        }
     }
 
     if (lastarg[0] == '\0') {
