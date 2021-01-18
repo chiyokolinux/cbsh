@@ -1,4 +1,4 @@
-VERSION = 0.1
+VERSION = 0.2
 NAME	= cbsh
 
 PREFIX = /usr
@@ -7,6 +7,6 @@ MANPREFIX = $(PREFIX)/share/man
 CC = gcc
 LD = $(CC)
 CPPFLAGS =
-CFLAGS   = -Wextra -Wall -Os -g
-LDFLAGS  = # -s
+CFLAGS   = -Wextra -Wall -Os
+LDFLAGS  = -s
 LDLIBS   = 
