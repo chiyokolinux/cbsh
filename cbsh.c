@@ -468,6 +468,16 @@ void completion(const char *buf, linenoiseCompletions *lc) {
     while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
+        if (strlen(lastarg) < 2)
+            continue;
+        if (!strncmp(lastarg, "&& ", 3) || !strncmp(lastarg, "|| ", 3)) {
+            bufidx = -1;
+        } else if (lastarg[0] == ';') {
+            bufidx = -(lastarg[1] == ' ');
+            lastarg++;
+        } else if (*(lastarg - 2) == ';') {
+            bufidx = 0;
+        }
     }
 
     if (lastarg[0] == '\0') {
@@ -480,7 +490,11 @@ void completion(const char *buf, linenoiseCompletions *lc) {
         int cmdidx = 0;
         while (commands[cmdidx] != NULL) {
             if (startswith(commands[cmdidx], lastarg)) {
-                linenoiseAddCompletion(lc, commands[cmdidx]);
+                char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(commands[cmdidx]) - strlen(lastarg)));
+                strcpy(tmp, firstbuf);
+                strcat(tmp, commands[cmdidx] + strlen(lastarg));
+                linenoiseAddCompletion(lc, tmp);
+                free(tmp);
             }
             cmdidx++;
         }
