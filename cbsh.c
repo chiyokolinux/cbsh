@@ -172,8 +172,10 @@ void shell_mainloop() {
 
                 if (exit_expect_satisfy & (1 << 1)) {
                     command_token = command + parse_pos + (parse_pos != 0)  - ((parse_pos == parse_pos_max) * 2);
+                    exit_expect_satisfy = 0;
+                } else {
+                    break;
                 }
-                break;
             }
 
             /* remove leading spaces */
