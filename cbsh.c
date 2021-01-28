@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#define NUM_BUILTINS    6
+#define NUM_BUILTINS    7
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -260,7 +260,10 @@ int parse_builtin(int argc, char *const argv[]) {
             strcpy(curdir, homedir);
             return 0x0;
         } else if (argc == 2) {
-            chdir(argv[1]);
+            if (chdir(argv[1])) {
+                perror("chdir");
+                return 0x1;
+            }
             buildhints(".");
             getcwd(curdir, MAXCURDIRLEN);
             return 0x0;
@@ -291,6 +294,11 @@ int parse_builtin(int argc, char *const argv[]) {
                 printf("error: getenv: no such variable\n");
                 return 0x1;
             }
+        }
+        return 0xAA;
+    } else if (!strcmp(argv[0], "builtin")) {
+        if (argc >= 2) {
+            return parse_builtin(argc - 1, argv + 1);
         }
         return 0xAA;
     }
@@ -428,6 +436,7 @@ void buildcommands() {
     commands[alloc_total++] = "export";
     commands[alloc_total++] = "setenv";
     commands[alloc_total++] = "getenv";
+    commands[alloc_total++] = "builtin";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
