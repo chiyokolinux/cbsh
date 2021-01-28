@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#define NUM_BUILTINS    9
+#define NUM_BUILTINS    10
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -249,7 +249,7 @@ void shell_mainloop() {
  * returns 0xDEAD for exit
 **/
 int parse_builtin(int argc, char *const argv[]) {
-    if (!strcmp(argv[0], "exit")) {
+    if (!strcmp(argv[0], "exit") || !strcmp(argv[0], "logout")) {
         if (argc == 1)
             return 0xDEAD;
         return 0xAA;
@@ -329,7 +329,7 @@ int parse_builtin(int argc, char *const argv[]) {
         spawnwait(argv + 1);
         return 0x0;
     } else if (!strcmp(argv[0], "echo")) {
-        int putnewline = 1, option, current = 1;
+        int putnewline = 1, current = 1;
 
         if (argc > 1) {
             if (!strcmp(argv[1], "-e")) {
@@ -491,6 +491,7 @@ void buildcommands() {
     commands[alloc_total++] = "builtin";
     commands[alloc_total++] = "command";
     commands[alloc_total++] = "echo";
+    commands[alloc_total++] = "logout";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
