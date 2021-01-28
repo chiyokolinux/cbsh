@@ -27,6 +27,7 @@ void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
 void dtmsplit(char *str, char *delim, char ***array, int *length);
+void dtmparse(char *str, char ***array, int *length);
 void buildhints(const char *targetdir);
 void buildcommands();
 int startswith(const char *str, const char *prefix);
@@ -204,7 +205,7 @@ void shell_mainloop() {
             /* read command to arg list */
             char **cmd_argv = NULL;
             int count = 0;
-            dtmsplit(command_token, " ", &cmd_argv, &count);
+            dtmparse(command_token, &cmd_argv, &count);
             cmd_argv[count] = NULL;
 
 #ifdef DEBUG_OUTPUT
@@ -406,18 +407,73 @@ int spawnwait(char *const argv[]) {
 void dtmsplit(char *str, char *delim, char ***array, int *length) {
     int i = 0;
     char *token;
-    char **res = (char **) malloc(0 * sizeof(char *));
+    char **res = malloc(sizeof(char *) * 2);
 
     /* get the first token */
     token = strtok(str, delim);
-    while( token != NULL ) {
+    while (token != NULL) {
         res = (char **) realloc(res, (i + 2) * sizeof(char *));
         res[i] = token;
-        i++;
         token = strtok(NULL, delim);
+        i++;
     }
+
     *array = res;
     *length = i;
+}
+
+/**
+ * parses str with shell syntax
+**/
+void dtmparse(char *str, char ***array, int *length) {
+    int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1;
+    char **res = malloc(sizeof(char *) * 2);
+
+    res[i] = str;
+    for (; k < maxlen; k++) {
+        switch (str[k]) {
+            case ' ':
+                if (str[k - 1] != '\\' && !in_quotes) {
+                    if (str[k - 1] == '"' || str[k - 1] == '\'') {
+                        str[k - 1] = '\0';
+                    } else {
+                        str[k] = '\0';
+                    }
+                    res[++i] = str + k + 1;
+                }
+                break;
+            case '"':
+                if (in_quotes == 2) {
+                    break;
+                } else if (in_quotes == 1 && str[k - 1] != '\\') {
+                    in_quotes = 0;
+                } else if (str[k - 1] != '\\') {
+                    in_quotes = 1;
+                    res[i] = str + k + 1;
+                }
+                break;
+            case '\'':
+                if (in_quotes == 1) {
+                    break;
+                } else if (in_quotes == 2 && str[k - 1] != '\\') {
+                    in_quotes = 0;
+                } else if (str[k - 1] != '\\') {
+                    in_quotes = 2;
+                    res[i] = str + k + 1;
+                }
+                break;
+        }
+        if (i != i_alloc) {
+            res = realloc(res, sizeof(char *) * (i + 2));
+            i_alloc = i;
+        }
+    }
+    if (str[k - 1] == '"' || str[k - 1] == '\'') {
+        str[k - 1] = '\0';
+    }
+
+    *array = res;
+    *length = i + 1;
 }
 
 /* function to build the hints array */
@@ -514,11 +570,11 @@ void buildcommands() {
     commands[alloc_total++] = "command";
     commands[alloc_total++] = "echo";
     commands[alloc_total++] = "logout";
-    commands[allic_total++] = ":";
-    commands[allic_total++] = ".";
-    commands[allic_total++] = "source";
-    commands[allic_total++] = "alias";
-    commands[allic_total++] = "unalias";
+    commands[alloc_total++] = ":";
+    commands[alloc_total++] = ".";
+    commands[alloc_total++] = "source";
+    commands[alloc_total++] = "alias";
+    commands[alloc_total++] = "unalias";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
