@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#define NUM_BUILTINS    3
+#define NUM_BUILTINS    6
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -211,6 +211,7 @@ void shell_mainloop() {
                 case 0xDEAD:
                     running = 0;
                     break;
+                case 0x1:
                 case 0x0:
                     break;
                 case 0xAA:
@@ -263,6 +264,33 @@ int parse_builtin(int argc, char *const argv[]) {
             buildhints(".");
             getcwd(curdir, MAXCURDIRLEN);
             return 0x0;
+        }
+        return 0xAA;
+    } else if (!strcmp(argv[0], "export") || !strcmp(argv[0], "setenv")) {
+        if (argc == 2) {
+            char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
+            if (sscanf(argv[1], "%63[^=]=%1023s", key, value) == 2) {
+                setenv(key, value, 1);
+                free(key);
+                free(value);
+                return 0x0;
+            } else {
+                free(key);
+                free(value);
+                return 0xAA;
+            }
+        }
+        return 0xAA;
+    } else if (!strcmp(argv[0], "getenv")) {
+        if (argc == 2) {
+            char *envvar = getenv(argv[1]);
+            if (envvar) {
+                printf("%s\n", envvar);
+                return 0x0;
+            } else {
+                printf("error: getenv: no such variable\n");
+                return 0x1;
+            }
         }
         return 0xAA;
     }
@@ -397,6 +425,9 @@ void buildcommands() {
     commands[alloc_total++] = "cd";
     commands[alloc_total++] = "chdir";
     commands[alloc_total++] = "exit";
+    commands[alloc_total++] = "export";
+    commands[alloc_total++] = "setenv";
+    commands[alloc_total++] = "getenv";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
