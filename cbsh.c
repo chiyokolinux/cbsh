@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#define NUM_BUILTINS    10
+#define NUM_BUILTINS    15
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -353,6 +353,14 @@ int parse_builtin(int argc, char *const argv[]) {
         }
 
         return 0x0;
+    } else if (!strcmp(argv[0], ":")) {
+        return 0x0;
+    } else if (!strcmp(argv[0], ".") || !strcmp(argv[0], "source")) {
+
+    } else if (!strcmp(argv[0], "alias")) {
+
+    } else if (!strcmp(argv[0], "unalias")) {
+
     }
     return 0x1337;
 }
@@ -492,6 +500,11 @@ void buildcommands() {
     commands[alloc_total++] = "command";
     commands[alloc_total++] = "echo";
     commands[alloc_total++] = "logout";
+    commands[allic_total++] = ":";
+    commands[allic_total++] = ".";
+    commands[allic_total++] = "source";
+    commands[allic_total++] = "alias";
+    commands[allic_total++] = "unalias";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
