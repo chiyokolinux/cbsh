@@ -426,20 +426,26 @@ void dtmsplit(char *str, char *delim, char ***array, int *length) {
  * parses str with shell syntax
 **/
 void dtmparse(char *str, char ***array, int *length) {
-    int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1;
+    int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1, helper = 0;
     char **res = malloc(sizeof(char *) * 2);
 
     res[i] = str;
     for (; k < maxlen; k++) {
         switch (str[k]) {
             case ' ':
-                if (str[k - 1] != '\\' && !in_quotes) {
-                    if (str[k - 1] == '"' || str[k - 1] == '\'') {
-                        str[k - 1] = '\0';
-                    } else {
-                        str[k] = '\0';
+                if (str[k - 1] != '\\') {
+                    if (!in_quotes) {
+                        if (str[k - 1] == '"' || str[k - 1] == '\'') {
+                            str[k - 1] = '\0';
+                        } else {
+                            str[k] = '\0';
+                        }
+                        res[++i] = str + k + 1;
                     }
-                    res[++i] = str + k + 1;
+                } else {
+                    for (helper = k - 1; str + helper != res[i]; helper--) {
+                        str[helper + 1] = str[helper];
+                    }
                 }
                 break;
             case '"':
