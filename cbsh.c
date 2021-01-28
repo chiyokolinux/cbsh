@@ -12,6 +12,17 @@
 
 #define NUM_BUILTINS    15
 
+/* types */
+struct command_alias {
+    char *alias;
+    char **command;
+};
+struct shell_function {
+    char *name;
+    char ***commands;
+};
+
+/* functions */
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
@@ -30,8 +41,11 @@ char *hostname;
 char *curdir;
 char *homedir;
 
+/* autocomplete globals */
 char **commands = NULL;
 char **files = NULL;
+struct command_alias **aliases = NULL;
+struct shell_function **functions = NULL;
 
 /**
  * flags that control cbsh's behaviour
