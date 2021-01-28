@@ -331,14 +331,10 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], "echo")) {
         int putnewline = 1, option, current = 1;
 
-        while ((option = getopt(argc, argv, "e")) != -1) {
-            switch (option) {
-                case 'e':
-                    putnewline = 0;
-                    current++;
-                    break;
-                case '?':
-                    return 0xAA;
+        if (argc > 1) {
+            if (!strcmp(argv[1], "-e")) {
+                putnewline = 0;
+                current++;
             }
         }
 
