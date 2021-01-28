@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#define NUM_BUILTINS    8
+#define NUM_BUILTINS    9
 
 void shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
@@ -307,11 +307,12 @@ int parse_builtin(int argc, char *const argv[]) {
         }
 
         int option;
+        char *pathent, *pathold;
         while ((option = getopt(argc, argv, "pVv")) != -1) {
             switch (option) {
                 case 'p':
-                    char *pathent = strdup("PATH=/usr/local/bin:/usr/bin:/bin");
-                    char *pathold = strdup(getenv("PATH"));
+                    pathent = strdup("PATH=/usr/local/bin:/usr/bin:/bin");
+                    pathold = strdup(getenv("PATH"));
                     putenv(pathent);
                     spawnwait(argv + 2);
                     setenv("PATH", pathold, 1);
@@ -326,6 +327,35 @@ int parse_builtin(int argc, char *const argv[]) {
         }
 
         spawnwait(argv + 1);
+        return 0x0;
+    } else if (!strcmp(argv[0], "echo")) {
+        int putnewline = 1, option, current = 1;
+
+        while ((option = getopt(argc, argv, "e")) != -1) {
+            switch (option) {
+                case 'e':
+                    putnewline = 0;
+                    current++;
+                    break;
+                case '?':
+                    return 0xAA;
+            }
+        }
+
+        for (; current < argc; current++) {
+            int argl = strlen(argv[current]), cchar = 0;
+            for (; cchar < argl; cchar++) {
+                putchar(argv[current][cchar]);
+            }
+
+            if (current != argc - 1) {
+                putchar(' ');
+            }
+        }
+        if (putnewline) {
+            putchar('\n');
+        }
+
         return 0x0;
     }
     return 0x1337;
@@ -464,6 +494,7 @@ void buildcommands() {
     commands[alloc_total++] = "getenv";
     commands[alloc_total++] = "builtin";
     commands[alloc_total++] = "command";
+    commands[alloc_total++] = "echo";
 
     /* corrently terminate array */
     commands[alloc_total] = NULL;
