@@ -1,8 +1,8 @@
 VERSION = 0.2
 NAME	= cbsh
 
-PREFIX = /usr
-MANPREFIX = $(PREFIX)/share/man
+PREFIX =
+MANPREFIX = /usr/share/man
 
 CC = gcc
 LD = $(CC)
