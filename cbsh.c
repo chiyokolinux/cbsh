@@ -326,6 +326,10 @@ int parse_builtin(int argc, char *const argv[]) {
         while ((option = getopt(argc, argv, "pVv")) != -1) {
             switch (option) {
                 case 'p':
+                    if (argc == 1) {
+                        return 0xAA;
+                    }
+
                     pathent = strdup("PATH=/usr/local/bin:/usr/bin:/bin");
                     pathold = strdup(getenv("PATH"));
                     putenv(pathent);
