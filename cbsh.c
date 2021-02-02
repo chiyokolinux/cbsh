@@ -632,9 +632,9 @@ int startswith(const char *str, const char *prefix) {
    in haystack if haystack contains needle.
    if not, returns 0. */
 int haschar(const char *haystack, const char needle) {
-    unsigned int position = 0;
+    unsigned int position;
 
-    for (; haystack[position] != '\0'; position++) {
+    for (position = 0; haystack[position] != '\0'; position++) {
         if (haystack[position] == needle) {
             return ++position;
         }
