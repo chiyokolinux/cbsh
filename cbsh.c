@@ -31,6 +31,7 @@ void dtmparse(char *str, char ***array, int *length);
 void buildhints(const char *targetdir);
 void buildcommands();
 int startswith(const char *str, const char *prefix);
+int haschar(const char *haystack, const char needle);
 char *hints(const char *buf, int *color, int *bold);
 void completion(const char *buf, linenoiseCompletions *lc);
 int panic(const char *error, const char *details);
@@ -270,11 +271,17 @@ void shell_mainloop() {
  * returns 0x1337 if no builtin function
  * with the specified name was found
  * returns 0xDEAD for exit
+ * returns 0x0 or 0x1 to specify success or failure
+ * returns 0xAA if command usage is wrong
+ * returns 0xBA to shift args and re-parse
 **/
 int parse_builtin(int argc, char *const argv[]) {
     if (!strcmp(argv[0], "exit") || !strcmp(argv[0], "logout")) {
-        if (argc == 1)
+        if (argc == 1) {
             return 0xDEAD;
+        } else if (argc == 2) {
+            /* return 0xDEAD + (argv[2] << 16); */
+        }
         return 0xAA;
     } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
         if (argc == 1) {
@@ -303,6 +310,24 @@ int parse_builtin(int argc, char *const argv[]) {
                 free(value);
                 return 0xAA;
             }
+        }
+        return 0xAA;
+    } else if (haschar(argv[0], '=')) {
+        char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
+        if (sscanf(argv[0], "%63[^=]=%1023s", key, value) == 2) {
+            setenv(key, value, 1);
+            free(key);
+            free(value);
+
+            /* if there were arguments left, run the command after all var declarations */
+            if (argc == 1) {
+                return 0x0;
+            } else {
+                return 0xBA;
+            }
+        } else {
+            free(key);
+            free(value);
         }
         return 0xAA;
     } else if (!strcmp(argv[0], "getenv")) {
@@ -439,9 +464,11 @@ void dtmparse(char *str, char ***array, int *length) {
     int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1, helper = 0;
     char **res = malloc(sizeof(char *) * 2);
 
+    /* first pass: dtmsplit */
     res[i] = str;
     for (; k < maxlen; k++) {
         switch (str[k]) {
+            /* space split, escaping and quotes */
             case ' ':
                 if (str[k - 1] != '\\') {
                     if (!in_quotes) {
@@ -599,6 +626,21 @@ void buildcommands() {
 /* check if str starts with prefix */
 int startswith(const char *str, const char *prefix) {
     return strncmp(prefix, str, strlen(prefix)) == 0;
+}
+
+/* returns first position (staring with 1) of needle
+   in haystack if haystack contains needle.
+   if not, returns 0. */
+int haschar(const char *haystack, const char needle) {
+    unsigned int position = 0;
+
+    for (; haystack[position] != '\0'; position++) {
+        if (haystack[position] == needle) {
+            return ++position;
+        }
+    }
+
+    return 0;
 }
 
 /* hints */
