@@ -248,6 +248,9 @@ void shell_mainloop() {
             printf("program exited with exit code %d\n", exit_code);
 #endif
 
+            /* if a command created a file, take note of that */
+            buildhints(".");
+
             /* free stuff */
             free(cmd_argv);
         }
@@ -271,7 +274,6 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
         if (argc == 1) {
             chdir(homedir);
-            buildhints(".");
             strcpy(curdir, homedir);
             return 0x0;
         } else if (argc == 2) {
@@ -279,7 +281,6 @@ int parse_builtin(int argc, char *const argv[]) {
                 perror("chdir");
                 return 0x1;
             }
-            buildhints(".");
             getcwd(curdir, MAXCURDIRLEN);
             return 0x0;
         }
