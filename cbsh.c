@@ -160,7 +160,12 @@ void shell_mainloop() {
         /* print promt & read command (liblinenoise approach) */
         snprintf(prompt, maxprompt, ps1, username, hostname, curdir);
         command = linenoise(prompt);
-        linenoiseHistoryAdd(command);
+        if (command) {
+            linenoiseHistoryAdd(command);
+        } else {
+            running = 0;
+            break;
+        }
 
         parse_next = 1, parse_pos = 0, parse_pos_max = strlen(command) + 1, exit_expect = -1, exit_expect_satisfy = 0;
 
