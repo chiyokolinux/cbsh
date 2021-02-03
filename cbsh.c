@@ -336,7 +336,7 @@ int parse_builtin(int argc, char *const argv[]) {
                         return 0xAA;
                     }
 
-                    pathent = strdup("PATH=/usr/local/bin:/usr/bin:/bin");
+                    pathent = strdup("PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin");
                     pathold = strdup(getenv("PATH"));
                     putenv(pathent);
                     spawnwait(argv + 2);
