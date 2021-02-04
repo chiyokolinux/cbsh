@@ -298,20 +298,24 @@ int parse_builtin(int argc, char *const argv[]) {
         }
         return 0xAA;
     } else if (!strcmp(argv[0], "export") || !strcmp(argv[0], "setenv")) {
-        if (argc == 2) {
+        if (argc == 1) {
+            return 0xAA;
+        }
+
+        int varidx;
+        for (varidx = 1; varidx < argc; varidx++) {
             char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
-            if (sscanf(argv[1], "%63[^=]=%1023s", key, value) == 2) {
+            if (sscanf(argv[varidx], "%63[^=]=%1023s", key, value) == 2) {
                 setenv(key, value, 1);
                 free(key);
                 free(value);
-                return 0x0;
             } else {
                 free(key);
                 free(value);
                 return 0xAA;
             }
         }
-        return 0xAA;
+        return 0x0;
     } else if (haschar(argv[0], '=')) {
         char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
         if (sscanf(argv[0], "%63[^=]=%1023s", key, value) == 2) {
