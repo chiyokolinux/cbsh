@@ -23,7 +23,7 @@ struct shell_function {
 };
 
 /* functions */
-void shell_mainloop();
+int shell_mainloop();
 int parse_builtin(int argc, char *const argv[]);
 int spawnwait(char *const argv[]);
 void dtmsplit(char *str, char *delim, char ***array, int *length);
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     linenoiseSetHintsCallback(hints);
 
     /* run the shell's mainloop */
-    shell_mainloop();
+    int shell_return_value = shell_mainloop();
 
     /* save history file */
     chdir(homedir);
@@ -142,14 +142,14 @@ int main(int argc, char **argv) {
         linenoiseHistorySave(".cbsh_history");
 
     printf("bye!\n");
-    return 0;
+    return shell_return_value;
 }
 
 /**
  * cbsh's mainloop
  * parses, runs, etc. until exit is called
 **/
-void shell_mainloop() {
+int shell_mainloop() {
     int running = 1, parse_next = 1;
 
     char *command = NULL, *command_token = NULL;
@@ -239,7 +239,11 @@ void shell_mainloop() {
                     fprintf(stderr, "%s: wrong number of arguments!\n", cmd_argv[0]);
                     break;
                 default:
-                    fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+                    if ((exit_code & 0xDEAD) == 0xDEAD) {
+                        return (exit_code >> 16);
+                    } else {
+                        fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
+                    }
                     break;
             }
 
@@ -264,6 +268,8 @@ void shell_mainloop() {
         /* free stuff that is no longer used */
         free(command);
     }
+
+    return 0;
 }
 
 /**
@@ -280,7 +286,7 @@ int parse_builtin(int argc, char *const argv[]) {
         if (argc == 1) {
             return 0xDEAD;
         } else if (argc == 2) {
-            /* return 0xDEAD + (argv[2] << 16); */
+            return 0xDEAD | (atoi(argv[1]) << 16);
         }
         return 0xAA;
     } else if (!strcmp(argv[0], "cd") || !strcmp(argv[0], "chdir")) {
@@ -526,6 +532,11 @@ void dtmparse(char *str, char ***array, int *length) {
                         }
                         res[i]++;
                     }
+                }
+                break;
+            case '$':
+                if (str[k - 1] != '\\') {
+                    /* this is complicated. TODO. */
                 }
                 break;
         }
