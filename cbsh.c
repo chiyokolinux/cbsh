@@ -480,8 +480,11 @@ void dtmparse(char *str, char ***array, int *length) {
                         res[++i] = str + k + 1;
                     }
                 } else {
-                    for (helper = k - 1; str + helper != res[i]; helper--) {
-                        str[helper + 1] = str[helper];
+                    if (!in_quotes) {
+                        for (helper = k - 2; str + helper != res[i] - 1; helper--) {
+                            str[helper + 1] = str[helper];
+                        }
+                        res[i]++;
                     }
                 }
                 break;
@@ -492,7 +495,15 @@ void dtmparse(char *str, char ***array, int *length) {
                     in_quotes = 0;
                 } else if (str[k - 1] != '\\') {
                     in_quotes = 1;
-                    res[i] = str + k + 1;
+                    /* treat thingy as one argument, remove quote and continue parse */
+                    if (str + k == res[i]) {
+                        res[i] = str + k + 1;
+                    } else {
+                        for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                            str[helper + 1] = str[helper];
+                        }
+                        res[i]++;
+                    }
                 }
                 break;
             case '\'':
@@ -502,7 +513,15 @@ void dtmparse(char *str, char ***array, int *length) {
                     in_quotes = 0;
                 } else if (str[k - 1] != '\\') {
                     in_quotes = 2;
-                    res[i] = str + k + 1;
+                    /* treat thingy as one argument, remove quote and continue parse */
+                    if (str + k == res[i]) {
+                        res[i] = str + k + 1;
+                    } else {
+                        for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                            str[helper + 1] = str[helper];
+                        }
+                        res[i]++;
+                    }
                 }
                 break;
         }
