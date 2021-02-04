@@ -406,11 +406,11 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], ":")) {
         return 0x0;
     } else if (!strcmp(argv[0], ".") || !strcmp(argv[0], "source")) {
-
+        return 0x0;
     } else if (!strcmp(argv[0], "alias")) {
-
+        return 0x0;
     } else if (!strcmp(argv[0], "unalias")) {
-
+        return 0x0;
     }
     return 0x1337;
 }
