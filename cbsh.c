@@ -15,7 +15,7 @@
 /* types */
 struct command_alias {
     char *alias;
-    char **command;
+    char *command;
 };
 struct shell_function {
     char *name;
@@ -48,6 +48,7 @@ char **commands = NULL;
 char **files = NULL;
 struct command_alias **aliases = NULL;
 struct shell_function **functions = NULL;
+unsigned int alias_c = 0, function_c = 0;
 
 /**
  * flags that control cbsh's behaviour
@@ -133,6 +134,9 @@ int main(int argc, char **argv) {
     linenoiseSetCompletionCallback(completion);
     linenoiseSetHintsCallback(hints);
 
+    /* init aliases & shell functions (TODO) */
+    aliases = malloc(sizeof(struct command_alias *));
+
     /* run the shell's mainloop */
     int shell_return_value = shell_mainloop();
 
@@ -213,6 +217,32 @@ int shell_mainloop() {
             int count = 0;
             dtmparse(command_token, &cmd_argv, &count);
             cmd_argv[count] = NULL;
+
+            /* find possible alias */
+            unsigned int aliascheck;
+            for (aliascheck = 0; aliascheck < alias_c; aliascheck++) {
+                if (!strcmp(cmd_argv[0], aliases[aliascheck]->alias)) {
+                    char **cmd_argv_new = NULL;
+                    int count_new = 0, offset = 0;
+
+                    dtmparse(aliases[aliascheck]->command, &cmd_argv_new, &count_new);
+                    cmd_argv_new = realloc(cmd_argv_new, sizeof(char *) * (count_new + count + 1));
+
+                    for (; offset <= count; offset++) {
+                        cmd_argv_new[count_new + offset] = cmd_argv[offset + 1];
+                    }
+                    count = count_new + count - 1;
+
+                    /* avoid self-binding problems */
+                    if (!strcmp(cmd_argv[0], cmd_argv_new[0])) {
+                        cmd_argv = cmd_argv_new;
+                        break;
+                    } else {
+                        cmd_argv = cmd_argv_new;
+                        aliascheck = 0;
+                    }
+                }
+            }
 
 #ifdef DEBUG_OUTPUT
             printf("parsed command: ");
@@ -311,7 +341,7 @@ int parse_builtin(int argc, char *const argv[]) {
         int varidx;
         for (varidx = 1; varidx < argc; varidx++) {
             char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
-            if (sscanf(argv[varidx], "%63[^=]=%1023s", key, value) == 2) {
+            if (sscanf(argv[varidx], "%63[^=]=%1023[^\n]", key, value) == 2) {
                 setenv(key, value, 1);
                 free(key);
                 free(value);
@@ -324,7 +354,7 @@ int parse_builtin(int argc, char *const argv[]) {
         return 0x0;
     } else if (haschar(argv[0], '=')) {
         char *key = malloc(sizeof(char) * 64), *value = malloc(sizeof(char) * 1024);
-        if (sscanf(argv[0], "%63[^=]=%1023s", key, value) == 2) {
+        if (sscanf(argv[0], "%63[^=]=%1023[^\n]", key, value) == 2) {
             setenv(key, value, 1);
             free(key);
             free(value);
@@ -418,6 +448,36 @@ int parse_builtin(int argc, char *const argv[]) {
     } else if (!strcmp(argv[0], ".") || !strcmp(argv[0], "source")) {
         return 0x0;
     } else if (!strcmp(argv[0], "alias")) {
+        if (argc == 1) {
+            unsigned int i;
+
+            for (i = 0; aliases[i] != NULL; i++) {
+                printf("alias %s='%s'\n", aliases[i]->alias, aliases[i]->command);
+            }
+
+            return 0x0;
+        }
+
+        /* fix memory */
+        aliases = realloc(aliases, sizeof(struct command_alias *) * (alias_c + argc));
+
+        int varidx;
+        for (varidx = 1; varidx < argc; varidx++) {
+            char *key = malloc(sizeof(char) * 128), *value = malloc(sizeof(char) * 2048);
+            if (sscanf(argv[varidx], "%127[^=]=%2047[^\n]", key, value) == 2) {
+                aliases[alias_c] = malloc(sizeof(struct command_alias));
+
+                aliases[alias_c]->alias = key;
+                aliases[alias_c]->command = value;
+
+                alias_c++;
+            } else {
+                free(key);
+                free(value);
+                return 0xAA;
+            }
+        }
+
         return 0x0;
     } else if (!strcmp(argv[0], "unalias")) {
         return 0x0;
