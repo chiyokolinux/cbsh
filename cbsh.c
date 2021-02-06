@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     if (strcmp(homedir, "/") && !(flags & 1 << 1))
         linenoiseHistorySave(".cbsh_history");
 
-    printf("bye!\n");
+    printf("logout\n");
     return shell_return_value;
 }
 
