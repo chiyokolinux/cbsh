@@ -225,7 +225,7 @@ int shell_mainloop() {
                     char **cmd_argv_new = NULL;
                     int count_new = 0, offset = 0;
 
-                    dtmparse(aliases[aliascheck]->command, &cmd_argv_new, &count_new);
+                    dtmparse(strdup(aliases[aliascheck]->command), &cmd_argv_new, &count_new);
                     cmd_argv_new = realloc(cmd_argv_new, sizeof(char *) * (count_new + count + 1));
 
                     for (; offset <= count; offset++) {
@@ -239,7 +239,7 @@ int shell_mainloop() {
                         break;
                     } else {
                         cmd_argv = cmd_argv_new;
-                        aliascheck = 0;
+                        aliascheck = -1;
                     }
                 }
             }
@@ -478,6 +478,9 @@ int parse_builtin(int argc, char *const argv[]) {
             }
         }
 
+        /* add alias to command list */
+        buildcommands();
+
         return 0x0;
     } else if (!strcmp(argv[0], "unalias")) {
         return 0x0;
@@ -713,7 +716,21 @@ void buildcommands() {
     commands[alloc_total++] = "alias";
     commands[alloc_total++] = "unalias";
 
-    /* corrently terminate array */
+    /* add aliases */
+    if (alloc_total + alias_c + function_c > (unsigned)alloc_current) {
+        alloc_current += (alias_c + function_c);
+        commands = realloc(commands, sizeof(char *) * alloc_current);
+    }
+    unsigned int idx;
+    for (idx = 0; idx < alias_c; idx++) {
+        commands[alloc_total++] = aliases[idx]->alias;
+    }
+    for (idx = 0; idx < function_c; idx++) {
+        commands[alloc_total++] = functions[idx]->name;
+    }
+    
+
+    /* correctly terminate array */
     commands[alloc_total] = NULL;
 }
 
