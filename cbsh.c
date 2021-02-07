@@ -32,6 +32,7 @@ void buildhints(const char *targetdir);
 void buildcommands();
 int startswith(const char *str, const char *prefix);
 int haschar(const char *haystack, const char needle);
+int countchar(const char *haystack, const char needle);
 char *hints(const char *buf, int *color, int *bold);
 void completion(const char *buf, linenoiseCompletions *lc);
 int panic(const char *error, const char *details);
@@ -504,7 +505,9 @@ int spawnwait(char *const argv[]) {
             perror("fork");
             return -1;
         default:
-            wait(&waitstatus);
+            signal(SIGINT, SIG_IGN);
+            waitpid(chpid, &waitstatus, WUNTRACED);
+            signal(SIGINT, SIG_DFL);
             return WEXITSTATUS(waitstatus);
     }
 }
@@ -638,7 +641,24 @@ void buildhints(char const *targetdir) {
 
     int dent_i = 0;
     while ((dent = readdir(dir)) != NULL) {
-        files[dent_i++] = strdup(dent->d_name);
+        files[dent_i] = malloc(sizeof(char) * (strlen(dent->d_name) + 2 + countchar(dent->d_name, ' ')));
+
+        /* strcpy with escaping, yay */
+        int pos, outpos = 0;
+        for (pos = 0; dent->d_name[pos] != '\0'; pos++, outpos++) {
+            /* maybe this gets optimized? need to check perf later. */
+            switch (dent->d_name[pos]) {
+                case ' ':
+                    files[dent_i][outpos++] = '\\';
+                    __attribute__ ((fallthrough));
+                default:
+                    files[dent_i][outpos] = dent->d_name[pos];
+            }
+        }
+        files[dent_i][outpos] = '\0';
+
+        dent_i++;
+
         if (dent_i > alloc_current) {
             alloc_current += alloc_step;
             files = realloc(files, sizeof(char *) * alloc_current);
@@ -752,6 +772,20 @@ int haschar(const char *haystack, const char needle) {
     }
 
     return 0;
+}
+
+/* like haschar, but does not return after first match and returns
+   how many occurrences of needle are haystack. */
+int countchar(const char *haystack, const char needle) {
+    unsigned int position, count = 0;
+
+    for (position = 0; haystack[position] != '\0'; position++) {
+        if (haystack[position] == needle) {
+            count++;
+        }
+    }
+
+    return count;
 }
 
 /* hints */
