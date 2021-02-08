@@ -137,6 +137,7 @@ int main(int argc, char **argv) {
 
     /* init aliases & shell functions (TODO) */
     aliases = malloc(sizeof(struct command_alias *));
+    functions = malloc(sizeof(struct shell_function *));
 
     /* run the shell's mainloop */
     int shell_return_value = shell_mainloop();
