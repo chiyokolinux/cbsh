@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     linenoiseSetCompletionCallback(completion);
     linenoiseSetHintsCallback(hints);
 
-    /* init aliases & shell functions (TODO) */
+    /* init aliases & shell functions */
     aliases = malloc(sizeof(struct command_alias *));
     functions = malloc(sizeof(struct shell_function *));
 
