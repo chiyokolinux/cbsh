@@ -220,6 +220,11 @@ int shell_mainloop() {
             dtmparse(command_token, &cmd_argv, &count);
             cmd_argv[count] = NULL;
 
+            /* exclamation mark shorthands */
+            if (cmd_argv[0][0] == '!') {
+                return panic("garbage library choice alert", "linenoise is a \"minimalistic\" piece of garbage and doesn't allow such functionality to be implemented. please wait until i find the time to fix this horrible mess.");
+            }
+
             /* find possible alias */
             unsigned int aliascheck;
             for (aliascheck = 0; aliascheck < alias_c; aliascheck++) {
