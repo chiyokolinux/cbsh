@@ -1,3 +1,6 @@
+# Makefile for cbsh
+# See LICENSE file for license and copyright information.
+
 include config.mk
 
 PROGBIN = $(NAME)
