@@ -756,7 +756,7 @@ void buildcommands() {
     for (idx = 0; idx < function_c; idx++) {
         commands[alloc_total++] = functions[idx]->name;
     }
-    
+
 
     /* correctly terminate array */
     commands[alloc_total] = NULL;
