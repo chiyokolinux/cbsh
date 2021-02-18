@@ -224,7 +224,8 @@ int shell_mainloop() {
 
             /* exclamation mark shorthands */
             if (cmd_argv[0][0] == '!') {
-                return panic("garbage library choice alert", "linenoise is a \"minimalistic\" piece of garbage and doesn't allow such functionality to be implemented. please wait until i find the time to fix this horrible mess.");
+                panic("not implemented", "linenoise, the line editing library used by cbsh, doesn't allow the program to read the history. thus, implementing exclamation mark shorthands is not really possible.\n");
+                break;
             }
 
             /* find possible alias */
