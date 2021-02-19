@@ -906,7 +906,7 @@ void completion(const char *buf, linenoiseCompletions *lc) {
 
 /* print error msg and return non-zero exit value */
 int panic(const char *error, const char *details) {
-    fprintf(stderr, "\nerror: %s\n", error);
+    fprintf(stderr, "\ncbsh: error: %s\n", error);
     if (details != NULL)
         fprintf(stderr, "   %s\n", details);
     return -1;
