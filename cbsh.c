@@ -222,6 +222,10 @@ int shell_mainloop() {
             dtmparse(command_token, &cmd_argv, &count);
             cmd_argv[count] = NULL;
 
+            if (count == 0) {
+                break;
+            }
+
             /* exclamation mark shorthands */
             if (cmd_argv[0][0] == '!') {
                 panic("not implemented", "linenoise, the line editing library used by cbsh, doesn't allow the program to read the history. thus, implementing exclamation mark shorthands is not really possible.\n");
@@ -548,6 +552,7 @@ void dtmsplit(char *str, char *delim, char ***array, int *length) {
 void dtmparse(char *str, char ***array, int *length) {
     int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1, helper = 0;
     char **res = malloc(sizeof(char *) * 2);
+    char *var_start = NULL;
 
     /* first pass: dtmsplit */
     res[i] = str;
@@ -563,8 +568,47 @@ void dtmparse(char *str, char ***array, int *length) {
                             str[k] = '\0';
                         }
                         res[++i] = str + k + 1;
+
+                        /* if we had a variable, insert its value */
+                        if (var_start) {
+                            /* fix for ${NAME} vars */
+                            if (str[k - 1] == '}') {
+                                str[k - 1] = '\0';
+                            }
+
+                            /* we null-terminated the segment, so this is fine */
+                            char *envvar = getenv(var_start);
+
+                            if (envvar) {
+                                /* NOTE: be careful here. we use the variable directly from the environment
+                                   without any strdup'ing. */
+                                res[i - 1] = envvar;
+                            } else {
+#ifdef DEBUG_OUTPUT
+                                panic("getenv", "variable not found in environment\n");
+#endif
+                                res[i - 1] = strdup("");
+                            }
+
+                            var_start = NULL;
+                        }
+                    } else {
+                        /* spaces in var names are illegal */
+                        if (var_start) {
+                            panic("illegal syntax", "varable names may not contain spaces\n");
+                            /* length 0 returns will cause the shell mainloop to just go to the next command */
+                            *length = 0;
+                            return;
+                        }
                     }
                 } else {
+                    /* spaces in var names are illegal */
+                    if (var_start) {
+                        panic("illegal syntax", "varable names may not contain spaces\n");
+                        *length = 0;
+                        return;
+                    }
+
                     if (!in_quotes) {
                         for (helper = k - 2; str + helper != res[i] - 1; helper--) {
                             str[helper + 1] = str[helper];
@@ -610,8 +654,17 @@ void dtmparse(char *str, char ***array, int *length) {
                 }
                 break;
             case '$':
+                if (res[i] != str + k) {
+                    panic("not yet implemented", "inline variables are not yet supported\n");
+                    break;
+                }
                 if (str[k - 1] != '\\') {
-                    /* this is complicated. TODO. */
+                    /* remove curly brackets if they are there */
+                    if (str[k + 1] == '{') {
+                        var_start = str + k + 2;
+                    } else {
+                        var_start = str + k + 1;
+                    }
                 }
                 break;
         }
@@ -622,6 +675,29 @@ void dtmparse(char *str, char ***array, int *length) {
     }
     if (str[k - 1] == '"' || str[k - 1] == '\'') {
         str[k - 1] = '\0';
+    }
+    /* if we had a variable, insert its value */
+    if (var_start) {
+        /* fix for ${NAME} vars */
+        if (str[k - 1] == '}') {
+            str[k - 1] = '\0';
+        }
+
+        /* we null-terminated the segment, so this is fine */
+        char *envvar = getenv(var_start);
+
+        if (envvar) {
+            /* NOTE: be careful here. we use the variable directly from the environment
+               without any strdup'ing. */
+            res[i] = envvar;
+        } else {
+#ifdef DEBUG_OUTPUT
+            panic("getenv", "variable not found in environment\n");
+#endif
+            res[i] = strdup("");
+        }
+
+        var_start = NULL;
     }
 
     *array = res;
