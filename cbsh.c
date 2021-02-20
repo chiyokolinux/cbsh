@@ -676,6 +676,13 @@ void dtmparse(char *str, char ***array, int *length) {
                     }
                 }
                 break;
+            case '}':
+                if (var_start) {
+                    if (inline_var) {
+
+                    }
+                }
+                break;
         }
         if (i != i_alloc) {
             res = realloc(res, sizeof(char *) * (i + 2));
