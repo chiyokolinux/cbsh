@@ -550,7 +550,7 @@ void dtmsplit(char *str, char *delim, char ***array, int *length) {
  * parses str with shell syntax
 **/
 void dtmparse(char *str, char ***array, int *length) {
-    int i = 0, i_alloc = 0, in_quotes = 0, maxlen = strlen(str), k = 1, helper = 0;
+    int i = 0, i_alloc = 0, in_quotes = 0, inline_var = 0, maxlen = strlen(str), k = 1, helper = 0;
     char **res = malloc(sizeof(char *) * 2);
     char *var_start = NULL;
 
@@ -580,17 +580,25 @@ void dtmparse(char *str, char ***array, int *length) {
                             char *envvar = getenv(var_start);
 
                             if (envvar) {
-                                /* NOTE: be careful here. we use the variable directly from the environment
-                                   without any strdup'ing. */
-                                res[i - 1] = envvar;
+                                if (inline_var) {
+                                    char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i - 1]) + 1));
+                                    strcpy(newarg, res[i - 1]);
+                                    strcat(newarg, envvar);
+
+                                    res[i - 1] = newarg;
+                                } else {
+                                    /* NOTE: be careful here. we use the variable directly from the environment
+                                       without any strdup'ing. */
+                                    res[i - 1] = envvar;
+                                }
                             } else {
 #ifdef DEBUG_OUTPUT
                                 panic("getenv", "variable not found in environment\n");
 #endif
-                                res[i - 1] = strdup("");
                             }
 
                             var_start = NULL;
+                            inline_var = 0;
                         }
                     } else {
                         /* spaces in var names are illegal */
@@ -654,11 +662,12 @@ void dtmparse(char *str, char ***array, int *length) {
                 }
                 break;
             case '$':
-                if (res[i] != str + k) {
-                    panic("not yet implemented", "inline variables are not yet supported\n");
-                    break;
-                }
                 if (str[k - 1] != '\\') {
+                    if (res[i] != str + k) {
+                        inline_var = 1;
+                        str[k] = '\0';
+                    }
+
                     /* remove curly brackets if they are there */
                     if (str[k + 1] == '{') {
                         var_start = str + k + 2;
@@ -687,14 +696,21 @@ void dtmparse(char *str, char ***array, int *length) {
         char *envvar = getenv(var_start);
 
         if (envvar) {
-            /* NOTE: be careful here. we use the variable directly from the environment
-               without any strdup'ing. */
-            res[i] = envvar;
+            if (inline_var) {
+                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i]) + 1));
+                strcpy(newarg, res[i]);
+                strcat(newarg, envvar);
+
+                res[i] = newarg;
+            } else {
+                /* NOTE: be careful here. we use the variable directly from the environment
+                   without any strdup'ing. */
+                res[i] = envvar;
+            }
         } else {
 #ifdef DEBUG_OUTPUT
             panic("getenv", "variable not found in environment\n");
 #endif
-            res[i] = strdup("");
         }
 
         var_start = NULL;
