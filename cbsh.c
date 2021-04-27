@@ -828,7 +828,7 @@ void buildcommands() {
                 alloc_current += alloc_step;
                 commands = realloc(commands, sizeof(char *) * alloc_current);
             }
-            /* only read first 32768 files (keep mem footprint little) */
+            /* only read first 32768 files (keep mem footprint small) */
             if (alloc_total > 32768) {
                 fprintf(stderr, "WARN: too big alloc because too many files in PATH\n");
                 return;
