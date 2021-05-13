@@ -129,8 +129,9 @@ int main(int argc, char **argv) {
         strcpy(curdir, "/");
     homedir = strdup(curdir);
 
-    /* go to home directory */
+    /* go to home directory and set $PWD*/
     chdir(curdir);
+    setenv("PWD", curdir, 1);
 
     /* init UTF-8 support */
     linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
@@ -353,6 +354,7 @@ int parse_builtin(int argc, char *const argv[]) {
         if (argc == 1) {
             chdir(homedir);
             strcpy(curdir, homedir);
+            setenv("PWD", curdir, 1);
             return 0x0;
         } else if (argc == 2) {
             if (chdir(argv[1])) {
@@ -360,6 +362,7 @@ int parse_builtin(int argc, char *const argv[]) {
                 return 0x1;
             }
             getcwd(curdir, MAXCURDIRLEN);
+            setenv("PWD", curdir, 1);
             return 0x0;
         }
         return 0xAA;
