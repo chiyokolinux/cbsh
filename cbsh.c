@@ -245,7 +245,7 @@ int shell_mainloop() {
 
             /* exclamation mark shorthands */
             if (cmd_argv[0][0] == '!') {
-                panic("not implemented", "linenoise, the line editing library used by cbsh, doesn't allow the program to read the history. thus, implementing exclamation mark shorthands is not really possible.\n");
+                panic("not implemented", "linenoise, the line editing library used by cbsh, doesn't allow the program to read the history. thus, implementing exclamation mark shorthands is not possible.\n");
                 break;
             }
 
