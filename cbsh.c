@@ -640,9 +640,9 @@ void dtmparse(char *str, char ***array, int *length) {
                 case '"':
                     if (in_quotes == 2) {
                         break;
-                    } else if (in_quotes == 1 && str[k - 1] != '\\') {
+                    } else if (in_quotes == 1) {
                         in_quotes = 0;
-                    } else if (str[k - 1] != '\\') {
+                    } else {
                         in_quotes = 1;
                         /* treat thingy as one argument, remove quote and continue parse */
                         if (str + k == res[i]) {
@@ -658,9 +658,9 @@ void dtmparse(char *str, char ***array, int *length) {
                 case '\'':
                     if (in_quotes == 1) {
                         break;
-                    } else if (in_quotes == 2 && str[k - 1] != '\\') {
+                    } else if (in_quotes == 2) {
                         in_quotes = 0;
-                    } else if (str[k - 1] != '\\') {
+                    } else {
                         in_quotes = 2;
                         /* treat thingy as one argument, remove quote and continue parse */
                         if (str + k == res[i]) {
