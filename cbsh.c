@@ -674,25 +674,48 @@ void dtmparse(char *str, char ***array, int *length) {
                     }
                     break;
                 case '$':
-                    if (str[k - 1] != '\\') {
-                        if (res[i] != str + k) {
-                            inline_var = 1;
-                            str[k] = '\0';
-                        }
+                    if (res[i] != str + k) {
+                        inline_var = 1;
+                        str[k] = '\0';
+                    }
 
-                        /* remove curly brackets if they are there */
-                        if (str[k + 1] == '{') {
-                            var_start = str + k + 2;
-                        } else {
-                            var_start = str + k + 1;
-                        }
+                    /* remove curly brackets if they are there */
+                    if (str[k + 1] == '{') {
+                        var_start = str + k + 2;
+                    } else {
+                        var_start = str + k + 1;
                     }
                     break;
                 case '}':
                     if (var_start) {
-                        if (inline_var) {
-
+                        /* fix for ${NAME} vars */
+                        if (str[k - 1] == '}') {
+                            str[k - 1] = '\0';
                         }
+
+                        /* we null-terminated the segment, so this is fine */
+                        char *envvar = getenv(var_start);
+
+                        if (envvar) {
+                            if (inline_var) {
+                                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i - 1]) + 1));
+                                strcpy(newarg, res[i - 1]);
+                                strcat(newarg, envvar);
+
+                                res[i - 1] = newarg;
+                            } else {
+                                /* NOTE: be careful here. we use the variable directly from the environment
+                                   without any strdup'ing. */
+                                res[i - 1] = envvar;
+                            }
+                        } else {
+#ifdef DEBUG_OUTPUT
+                            panic("getenv", "variable not found in environment\n");
+#endif
+                        }
+
+                        var_start = NULL;
+                        inline_var = 0;
                     }
                     break;
             }
