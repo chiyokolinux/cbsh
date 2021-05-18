@@ -581,7 +581,7 @@ void dtmparse(char *str, char ***array, int *length) {
                 /* space split, escaping and quotes */
                 case '\\':
                     /* remove backslash and set escaped to 1 */
-                    for (helper = k - 2; str + helper != res[i] - 1; helper--) {
+                    for (helper = k - 1; str + helper > res[i] - 1; helper--) {
                         str[helper + 1] = str[helper];
                     }
                     res[i]++;
@@ -589,12 +589,7 @@ void dtmparse(char *str, char ***array, int *length) {
                     break;
                 case ' ':
                     if (!in_quotes) {
-                        /* remove " at end, if needed */
-                        if (str[k - 1] == '"' || str[k - 1] == '\'') {
-                            str[k - 1] = '\0';
-                        } else {
-                            str[k] = '\0';
-                        }
+                        str[k] = '\0';
                         res[++i] = str + k + 1;
 
                         /* if we had a variable, insert its value */
@@ -642,6 +637,10 @@ void dtmparse(char *str, char ***array, int *length) {
                         break;
                     } else if (in_quotes == 1) {
                         in_quotes = 0;
+                        for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                            str[helper + 1] = str[helper];
+                        }
+                        res[i]++;
                     } else {
                         in_quotes = 1;
                         /* treat thingy as one argument, remove quote and continue parse */
@@ -660,6 +659,10 @@ void dtmparse(char *str, char ***array, int *length) {
                         break;
                     } else if (in_quotes == 2) {
                         in_quotes = 0;
+                        for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                            str[helper + 1] = str[helper];
+                        }
+                        res[i]++;
                     } else {
                         in_quotes = 2;
                         /* treat thingy as one argument, remove quote and continue parse */
@@ -739,10 +742,6 @@ void dtmparse(char *str, char ***array, int *length) {
         }
     }
 
-
-    if (str[k - 1] == '"' || str[k - 1] == '\'') {
-        str[k - 1] = '\0';
-    }
     /* if we had a variable, insert its value */
     if (var_start) {
         /* fix for ${NAME} vars */
