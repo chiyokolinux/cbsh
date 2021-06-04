@@ -678,7 +678,6 @@ void dtmparse(char *str, char ***array, int *length) {
                     break;
                 case '$':
                     if (res[i] != str + k) {
-                        inline_var = 1;
                         str[k] = '\0';
                     }
 
