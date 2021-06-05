@@ -692,8 +692,8 @@ void dtmparse(char *str, char ***array, int *length) {
 
                         if (envvar) {
                             if (inline_var) {
-                                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i - 1]) + 1));
-                                strcpy(newarg, res[i - 1]);
+                                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i]) + 1));
+                                strcpy(newarg, res[i]);
                                 strcat(newarg, envvar);
 
                                 res[i - 1] = newarg;
