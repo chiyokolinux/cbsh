@@ -700,7 +700,7 @@ void dtmparse(char *str, char ***array, int *length) {
                             } else {
                                 /* NOTE: be careful here. we use the variable directly from the environment
                                    without any strdup'ing. */
-                                res[i - 1] = envvar;
+                                res[i] = envvar;
                             }
                         } else {
 #ifdef DEBUG_OUTPUT
