@@ -709,7 +709,10 @@ void dtmparse(char *str, char ***array, int *length) {
                         }
 
                         var_start = NULL;
-                        inline_var = 0;
+                    }
+
+                    if (res[i] != str + k) {
+                        inline_var = 1;
                     }
 
                     /* remove curly brackets if they are there */
