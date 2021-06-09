@@ -725,9 +725,7 @@ void dtmparse(char *str, char ***array, int *length) {
                 case '}':
                     if (var_start) {
                         /* fix for ${NAME} vars */
-                        if (str[k - 1] == '}') {
-                            str[k - 1] = '\0';
-                        }
+                        str[k] = '\0';
 
                         /* we null-terminated the segment, so this is fine */
                         char *envvar = getenv(var_start);
