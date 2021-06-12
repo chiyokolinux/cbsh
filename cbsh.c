@@ -591,6 +591,7 @@ void dtmparse(char *str, char ***array, int *length) {
                     if (!in_quotes) {
                         str[k] = '\0';
                         res[++i] = str + k + 1;
+                    }
 
                         /* if we had a variable, insert its value */
                         if (var_start) {
