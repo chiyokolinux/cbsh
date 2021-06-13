@@ -593,12 +593,12 @@ void dtmparse(char *str, char ***array, int *length) {
                         res[++i] = str + k + 1;
                     }
 
-                        /* if we had a variable, insert its value */
-                        if (var_start) {
-                            /* fix for ${NAME} vars */
-                            if (str[k - 1] == '}') {
-                                str[k - 1] = '\0';
-                            }
+                    /* if we had a variable, insert its value */
+                    if (var_start) {
+                        /* fix for ${NAME} vars */
+                        if (str[k - 1] == '}') {
+                            str[k - 1] = '\0';
+                        }
 
                             /* we null-terminated the segment, so this is fine */
                             char *envvar = getenv(var_start);
