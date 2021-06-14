@@ -600,8 +600,14 @@ void dtmparse(char *str, char ***array, int *length) {
                             str[k - 1] = '\0';
                         }
 
-                            /* we null-terminated the segment, so this is fine */
-                            char *envvar = getenv(var_start);
+                        /* we null-terminated the segment, so this is fine */
+                        char *envvar;
+                        if (in_quotes) {
+                            str[k] = '\0';
+                            envvar = getenv(var_start);
+                        } else {
+                            envvar = getenv(var_start);
+                        }
 
                             if (envvar) {
                                 if (inline_var) {
