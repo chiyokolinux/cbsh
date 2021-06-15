@@ -609,8 +609,10 @@ void dtmparse(char *str, char ***array, int *length) {
                             envvar = getenv(var_start);
                         }
 
-                            if (envvar) {
-                                if (inline_var) {
+                        /* COMPLETELY BROKEN!! */
+                        if (envvar) {
+                            if (inline_var) {
+                                if (!in_quotes) {
                                     char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i - 1]) + 1));
                                     strcpy(newarg, res[i - 1]);
                                     strcat(newarg, envvar);
