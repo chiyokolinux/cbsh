@@ -619,9 +619,11 @@ void dtmparse(char *str, char ***array, int *length) {
 
                                     res[i - 1] = newarg;
                                 } else {
-                                    /* NOTE: be careful here. we use the variable directly from the environment
-                                       without any strdup'ing. */
-                                    res[i - 1] = envvar;
+                                    char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i]) + 2));
+                                    strcpy(newarg, res[i]);
+                                    strcat(newarg, envvar);
+                                    strcat(newarg, " ");
+                                    res[i] = newarg;
                                 }
                             } else {
 #ifdef DEBUG_OUTPUT
