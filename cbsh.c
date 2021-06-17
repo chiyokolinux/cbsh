@@ -626,6 +626,11 @@ void dtmparse(char *str, char ***array, int *length) {
                                     res[i] = newarg;
                                 }
                             } else {
+                                /* NOTE: be careful here. we use the variable directly from the environment
+                                   without any strdup'ing. */
+                                res[i - !in_quotes] = envvar;
+                            }
+                        } else {
 #ifdef DEBUG_OUTPUT
                                 panic("getenv", "variable not found in environment\n");
 #endif
