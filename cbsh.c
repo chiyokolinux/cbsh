@@ -634,17 +634,6 @@ void dtmparse(char *str, char ***array, int *length) {
 #ifdef DEBUG_OUTPUT
                             panic("getenv", "variable not found in environment\n");
 #endif
-                            }
-
-                            var_start = NULL;
-                            inline_var = 0;
-                        }
-                    } else {
-                        /* spaces in var names are illegal */
-                        if (var_start) {
-                            panic("illegal syntax", "varable names may not contain spaces\n");
-                            *length = 0;
-                            return;
                         }
                     }
                     break;
