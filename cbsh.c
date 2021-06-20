@@ -635,6 +635,9 @@ void dtmparse(char *str, char ***array, int *length) {
                             panic("getenv", "variable not found in environment\n");
 #endif
                         }
+
+                        var_start = NULL;
+                        inline_var = 0;
                     }
                     break;
                 case '"':
