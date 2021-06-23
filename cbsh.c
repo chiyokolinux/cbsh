@@ -661,7 +661,7 @@ void dtmparse(char *str, char ***array, int *length) {
                         break;
                     } else if (in_quotes == 1) {
                         in_quotes = 0;
-                        for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                        for (helper = k - 1; str + helper > res[i] - 1; helper--) {
                             str[helper + 1] = str[helper];
                         }
                         res[i]++;
