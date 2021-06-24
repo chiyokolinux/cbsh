@@ -671,7 +671,7 @@ void dtmparse(char *str, char ***array, int *length) {
                         if (str + k == res[i]) {
                             res[i] = str + k + 1;
                         } else {
-                            for (helper = k - 1; str + helper != res[i] - 1; helper--) {
+                            for (helper = k - 1; str + helper > res[i] - 1; helper--) {
                                 str[helper + 1] = str[helper];
                             }
                             res[i]++;
