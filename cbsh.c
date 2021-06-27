@@ -756,8 +756,23 @@ void dtmparse(char *str, char ***array, int *length) {
 
                         if (envvar) {
                             if (inline_var) {
-                                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i - 1]) + 1));
-                                strcpy(newarg, res[i - 1]);
+                                int copylen, break_loop = 0;
+                                for (copylen = 0; copylen < maxlen && break_loop == 0; copylen++) {
+                                    switch (str[k + copylen]) {
+                                        case '\\':
+                                        case ' ':
+                                        case '"':
+                                        case '\'':
+                                        case '$':
+                                        case '}':
+                                        case '\0':
+                                            break_loop = 1;
+                                            break;
+                                    }
+                                }
+                                printf("%d\n", copylen);
+                                char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i]) + copylen + 1));
+                                strcpy(newarg, res[i]);
                                 strcat(newarg, envvar);
 
                                 res[i - 1] = newarg;
