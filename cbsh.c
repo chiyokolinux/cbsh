@@ -779,7 +779,7 @@ void dtmparse(char *str, char ***array, int *length) {
                                 strcpy(newarg, res[i]);
                                 strcat(newarg, envvar);**/
 
-                                res[i - 1] = newarg;
+                                res[i] = newarg;
                             } else {
                                 /* NOTE: be careful here. we use the variable directly from the environment
                                    without any strdup'ing. */
