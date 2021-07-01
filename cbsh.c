@@ -892,7 +892,7 @@ void buildhints(char const *targetdir) {
 
         dent_i++;
 
-        if (dent_i > alloc_current) {
+        if (dent_i >= alloc_current) {
             alloc_current += alloc_step;
             files = realloc(files, sizeof(char *) * alloc_current);
         }
