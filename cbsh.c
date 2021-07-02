@@ -933,7 +933,7 @@ void buildcommands() {
 
         while ((dent = readdir(dir)) != NULL) {
             commands[alloc_total++] = strdup(dent->d_name);
-            if (alloc_total > alloc_current) {
+            if (alloc_total >= alloc_current) {
                 alloc_current += alloc_step;
                 commands = realloc(commands, sizeof(char *) * alloc_current);
             }
