@@ -609,7 +609,7 @@ void dtmparse(char *str, char ***array, int *length) {
                             envvar = getenv(var_start);
                         }
 
-                        /* COMPLETELY BROKEN!! */
+                        /* UTTERLY AND FULLY BROKEN! */
                         if (envvar) {
                             if (inline_var) {
                                 if (!in_quotes) {
