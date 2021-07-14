@@ -649,6 +649,39 @@ void dtmparse(char *str, char ***array, int *length) {
                             str[helper + 1] = str[helper];
                         }
                         res[i]++;
+
+                        if (var_start) {
+                            var_start++;
+                            /* fix for ${NAME} vars */
+                            if (str[k - 1] == '}') {
+                                str[k - 1] = '\0';
+                            }
+
+                            /* we null-terminated the segment, so this is fine */
+                            char *envvar = getenv(var_start);
+
+                            if (envvar) {
+                                if (inline_var) {
+                                    char *newarg = malloc(sizeof(char) * (strlen(envvar) + strlen(res[i]) + 1));
+                                    strcpy(newarg, res[i]);
+                                    strcat(newarg, envvar);
+
+                                    res[i] = newarg;
+                                } else {
+                                    /* NOTE: be careful here. we use the variable directly from the environment
+                                       without any strdup'ing. */
+                                    res[i] = envvar;
+                                }
+                            } else {
+#ifdef DEBUG_OUTPUT
+                                panic("getenv", "variable not found in environment\n");
+                                printf("%s\n", var_start - 2);
+#endif
+                            }
+
+                            var_start = NULL;
+                            inline_var = 0;
+                        }
                     } else {
                         in_quotes = 1;
                         /* treat thingy as one argument, remove quote and continue parse */
