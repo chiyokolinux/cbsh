@@ -675,7 +675,6 @@ void dtmparse(char *str, char ***array, int *length) {
                             } else {
 #ifdef DEBUG_OUTPUT
                                 panic("getenv", "variable not found in environment\n");
-                                printf("%s\n", var_start - 2);
 #endif
                             }
 
