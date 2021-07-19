@@ -566,9 +566,9 @@ void dtmsplit(char *str, char *delim, char ***array, int *length) {
 }
 
 /**
- * parses str with shell syntax
+ * parses str with shell syntax (old, broken method)
 **/
-void dtmparse(char *str, char ***array, int *length) {
+void dtmparse_OLD(char *str, char ***array, int *length) {
     int i = 0, i_alloc = 0, in_quotes = 0, inline_var = 0, maxlen = strlen(str), k = 1, helper = 0, escaped = 0;
     char **res = malloc(sizeof(char *) * 2);
     char *var_start = NULL;
@@ -848,6 +848,74 @@ void dtmparse(char *str, char ***array, int *length) {
     }
 
     *array = res;
+    *length = i + 1;
+}
+
+/**
+ * parses str with shell syntax
+ *
+ * NEW PARSER! now uses a char-by-char
+ * seek-ahead parser because, while an
+ * action-on-token back-looking parser
+ * may be faster, it is significantly
+ * more difficult to write and harder
+ * to read.
+**/
+void dtmparse(char *str, char ***array, int *length) {
+    int i = 0, i_alloc = 2, in_quotes = 0, maxlen = strlen(str), k = 0, helper = 0, str_alloc = maxlen + 1, str_alloc_step = 32, str_pos = 0;
+    int *res = malloc(sizeof(int) * 3);
+    char *str_new = malloc(sizeof(char) * (str_alloc));
+
+    /* first pass: parse with relative offsets */
+    res[i] = str_pos;
+    for (; k <= maxlen; k++) {
+        switch (str[k]) {
+            case ' ':
+                /* make sure we have enough bytes */
+                if (str_pos >= str_alloc - 2) {
+                    str_new = realloc(str_new, sizeof(char) * (str_alloc + str_alloc_step));
+                    str_alloc = str_alloc + str_alloc_step;
+                }
+
+                if (!in_quotes) {
+                    /* don't parse empty arguments */
+                    if (str_new[str_pos] != '\0') {
+                        str_new[str_pos++] = '\0';
+                        res[++i] = str_pos;
+                    }
+                } else {
+                     str_new[str_pos++] = ' ';
+                }
+                break;
+            case '\\':
+                /* ignore this char and skip to the next one */
+                k++;
+                __attribute__ ((fallthrough));
+            default:
+                /* make sure we have enough bytes */
+                if (str_pos >= str_alloc - 2) {
+                    str_new = realloc(str_new, sizeof(char) * (str_alloc + str_alloc_step));
+                    str_alloc = str_alloc + str_alloc_step;
+                }
+                /* just copy the char if it has no special meaning */
+                str_new[str_pos++] = str[k];
+                break;
+        }
+        if (i >= i_alloc) {
+            res = realloc(res, sizeof(int) * (i + 3));
+            i_alloc += 2;
+        }
+    }
+
+    /* second pass: convert relative offsets to actual addresses
+                    because realloc moves memory */
+    char **res_final = malloc(sizeof(char *) * (i + 2));
+    for (k = 0; k <= i; k++) {
+        res_final[k] = str_new + res[k];
+        printf("%d\t%d\t%s\n", k, res[k], res_final[k]);
+    }
+
+    *array = res_final;
     *length = i + 1;
 }
 
