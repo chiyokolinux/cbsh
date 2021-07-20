@@ -917,7 +917,44 @@ void dtmparse(char *str, char ***array, int *length) {
                         break;
                     }
                 } else {
-                    // TODO
+                    /* seek to terminating special char */
+                    for (helper = k + 1; helper < maxlen &&
+                             str[helper] != '}' &&
+                             str[helper] != '"' &&
+                             str[helper] != '\'' &&
+                             str[helper] != '$' &&
+                             str[helper] != ' ' &&
+                             str[helper] != '\\' &&
+                             str[helper] != '='; helper++);
+
+                    /* terminate var name string */
+                    char tmp = str[helper];
+                    str[helper] = '\0';
+
+                    /* we null-terminated the segment, so this is fine */
+                    char *envvar = getenv(str + k + 1);
+
+                    k = helper - 1;
+                    str[helper] = tmp;
+
+                    if (envvar) {
+                        int lenvvar = strlen(envvar); // haha funny pun
+                        /* make sure we have enough bytes */
+                        if (str_pos + lenvvar >= str_alloc - 3) {
+                            str_new = realloc(str_new, sizeof(char) * (str_alloc + lenvvar + 2));
+                            str_alloc = str_alloc + lenvvar + 2;
+                        }
+
+                        /* simple strcpy */
+                        for (helper = 0; helper < lenvvar; helper++) {
+                            str_new[str_pos++] = envvar[helper];
+                        }
+                    } else {
+#ifdef DEBUG_OUTPUT
+                        panic("getenv", "variable not found in environment\n");
+#endif
+                        break;
+                    }
                 }
                 break;
             case ' ':
