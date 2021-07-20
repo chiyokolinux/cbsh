@@ -301,7 +301,7 @@ int shell_mainloop() {
                     fprintf(stderr, "%s: wrong number of arguments!\n", cmd_argv[0]);
                     break;
                 default:
-                    if ((exit_code & 0xDEAD) == 0xDEAD) {
+                    if ((exit_code & 0xFFFF) == 0xDEAD) {
                         return (exit_code >> 16);
                     } else {
                         fprintf(stderr, "error: parse_builtin returned an unknown action identifier (%hd)\n", exit_code);
