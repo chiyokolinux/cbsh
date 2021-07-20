@@ -1093,6 +1093,11 @@ char *hints(const char *buf, int *color, int *bold) {
     /* finds the last element of buf, delimited by spaces */
     char *lastbuf = strdup(buf), *lastarg = lastbuf;
     int bufidx = 0;
+
+    while (lastarg[0] == ' ') {
+        lastarg = ++lastbuf;
+    }
+
     while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
@@ -1146,6 +1151,11 @@ void completion(const char *buf, linenoiseCompletions *lc) {
     /* finds the last element of buf, delimited by spaces */
     char *firstbuf = strdup(buf), *lastbuf = firstbuf, *lastarg = firstbuf;
     int bufidx = 0;
+
+    while (lastarg[0] == ' ') {
+        lastarg = ++lastbuf;
+    }
+
     while ((lastbuf = strstr(lastbuf, " ")) != NULL) {
         lastarg = ++lastbuf;
         bufidx++;
