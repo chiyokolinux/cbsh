@@ -237,11 +237,12 @@ int shell_mainloop() {
             char **cmd_argv = NULL;
             int count = 0;
             dtmparse(command_token, &cmd_argv, &count);
-            cmd_argv[count] = NULL;
 
             if (count == 0) {
                 break;
             }
+
+            cmd_argv[count] = NULL;
 
             /* exclamation mark shorthands */
             if (cmd_argv[0][0] == '!') {
