@@ -871,6 +871,55 @@ void dtmparse(char *str, char ***array, int *length) {
     res[i] = str_pos;
     for (; k <= maxlen; k++) {
         switch (str[k]) {
+            case '$':
+                if (str[k + 1] == '(') {
+                    // TODO
+                } else if (str[k + 1] == '"' || str[k + 1] == '\'') {
+                    break;
+                } else if (str[k + 1] == '{') {
+                    /* seek to closing bracket */
+                    for (helper = k; str[helper] != '}' && helper <= maxlen; helper++);
+
+                    /* check syntax validity */
+                    if (str[helper] != '}') {
+                        panic("syntax error", "unclosed curly braces found\n");
+                        free(res);
+                        free(str_new);
+                        *array = NULL;
+                        *length = 0;
+                        return;
+                    }
+
+                    /* terminate var name string */
+                    str[helper] = '\0';
+
+                    /* we null-terminated the segment, so this is fine */
+                    char *envvar = getenv(str + k + 2);
+
+                    k = helper;
+
+                    if (envvar) {
+                        int lenvvar = strlen(envvar); // haha funny pun
+                        /* make sure we have enough bytes */
+                        if (str_pos + lenvvar >= str_alloc - 3) {
+                            str_new = realloc(str_new, sizeof(char) * (str_alloc + lenvvar + 2));
+                            str_alloc = str_alloc + lenvvar + 2;
+                        }
+
+                        /* simple strcpy */
+                        for (helper = 0; helper < lenvvar; helper++) {
+                            str_new[str_pos++] = envvar[helper];
+                        }
+                    } else {
+#ifdef DEBUG_OUTPUT
+                        panic("getenv", "variable not found in environment\n");
+#endif
+                        break;
+                    }
+                } else {
+                    // TODO
+                }
+                break;
             case ' ':
                 /* make sure we have enough bytes */
                 if (str_pos >= str_alloc - 2) {
