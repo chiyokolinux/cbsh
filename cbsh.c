@@ -913,6 +913,16 @@ void dtmparse(char *str, char ***array, int *length) {
         i--;
     }
 
+    /* check for quote termination */
+    if (in_quotes) {
+        panic("syntax error", "unterminated quote found\n");
+        free(res);
+        free(str_new);
+        *array = NULL;
+        *length = 0;
+        return;
+    }
+
     /* second pass: convert relative offsets to actual addresses
                     because realloc moves memory */
     char **res_final = malloc(sizeof(char *) * (i + 2));
