@@ -885,7 +885,37 @@ void dtmparse(char *str, char ***array, int *length) {
                         res[++i] = str_pos;
                     }
                 } else {
-                     str_new[str_pos++] = ' ';
+                    str_new[str_pos++] = ' ';
+                }
+                break;
+            case '\'':
+                if (in_quotes == 1) {
+                    /* make sure we have enough bytes */
+                    if (str_pos >= str_alloc - 2) {
+                        str_new = realloc(str_new, sizeof(char) * (str_alloc + str_alloc_step));
+                        str_alloc = str_alloc + str_alloc_step;
+                    }
+                    /* just copy the char */
+                    str_new[str_pos++] = str[k];
+                } else if (in_quotes == 2) {
+                    in_quotes = 0;
+                } else {
+                    in_quotes = 2;
+                }
+                break;
+            case '"':
+                if (in_quotes == 2) {
+                    /* make sure we have enough bytes */
+                    if (str_pos >= str_alloc - 2) {
+                        str_new = realloc(str_new, sizeof(char) * (str_alloc + str_alloc_step));
+                        str_alloc = str_alloc + str_alloc_step;
+                    }
+                    /* just copy the char */
+                    str_new[str_pos++] = str[k];
+                } else if (in_quotes == 1) {
+                    in_quotes = 0;
+                } else {
+                    in_quotes = 1;
                 }
                 break;
             case '\\':
@@ -929,6 +959,7 @@ void dtmparse(char *str, char ***array, int *length) {
     for (k = 0; k <= i; k++) {
         res_final[k] = str_new + res[k];
     }
+    free(res);
 
     *array = res_final;
     *length = i + 1;
