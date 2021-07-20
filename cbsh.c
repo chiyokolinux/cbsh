@@ -907,6 +907,11 @@ void dtmparse(char *str, char ***array, int *length) {
         }
     }
 
+    /* fix: skip empty args at end */
+    if (str_new[str_pos - 2] == '\0') {
+        i--;
+    }
+
     /* second pass: convert relative offsets to actual addresses
                     because realloc moves memory */
     char **res_final = malloc(sizeof(char *) * (i + 2));
