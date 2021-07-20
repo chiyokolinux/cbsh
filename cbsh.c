@@ -1181,7 +1181,7 @@ void completion(const char *buf, linenoiseCompletions *lc) {
         int cmdidx = 0;
         while (commands[cmdidx] != NULL) {
             if (startswith(commands[cmdidx], lastarg)) {
-                char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(commands[cmdidx]) - strlen(lastarg)));
+                char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(commands[cmdidx]) - strlen(lastarg) + 1));
                 strcpy(tmp, firstbuf);
                 strcat(tmp, commands[cmdidx] + strlen(lastarg));
                 linenoiseAddCompletion(lc, tmp);
@@ -1194,7 +1194,7 @@ void completion(const char *buf, linenoiseCompletions *lc) {
     int fileidx = 0;
     while (files[fileidx] != NULL) {
         if (startswith(files[fileidx], lastarg)) {
-            char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(files[fileidx]) - strlen(lastarg)));
+            char *tmp = malloc(sizeof(char) * (strlen(firstbuf) + strlen(files[fileidx]) - strlen(lastarg) + 1));
             strcpy(tmp, firstbuf);
             strcat(tmp, files[fileidx] + strlen(lastarg));
             linenoiseAddCompletion(lc, tmp);
