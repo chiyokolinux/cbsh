@@ -879,7 +879,7 @@ void dtmparse(char *str, char ***array, int *length) {
 
                 if (!in_quotes) {
                     /* don't parse empty arguments */
-                    if (str_new[str_pos] != '\0') {
+                    if (str_new[str_pos - 1] != '\0') {
                         str_new[str_pos++] = '\0';
                         res[++i] = str_pos;
                     }
@@ -912,7 +912,6 @@ void dtmparse(char *str, char ***array, int *length) {
     char **res_final = malloc(sizeof(char *) * (i + 2));
     for (k = 0; k <= i; k++) {
         res_final[k] = str_new + res[k];
-        printf("%d\t%d\t%s\n", k, res[k], res_final[k]);
     }
 
     *array = res_final;
