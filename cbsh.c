@@ -182,6 +182,11 @@ int shell_mainloop() {
     char *prompt = malloc(sizeof(char) * maxprompt);
     int i, parse_pos = 0, parse_pos_max = 0, exit_expect = -1, exit_expect_satisfy = 0;
 
+    // init $?
+    char exit_str[20] = { 0 };
+    strcpy(exit_str, "0");
+    setenv("?", exit_str, 1);
+
     while (running) {
         /* print promt & read command (liblinenoise approach) */
         snprintf(prompt, maxprompt, ps1, username, hostname, curdir);
@@ -308,6 +313,10 @@ int shell_mainloop() {
                     }
                     break;
             }
+
+            // put exit code into env
+            snprintf(exit_str, 19, "%d", exit_code);
+            setenv("?", exit_str, 1);
 
             if (exit_expect == 0 && exit_code != 0)
                 exit_expect_satisfy = 2;
