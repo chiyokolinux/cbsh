@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
                 flags |= 1 << 1;
                 break;
             case 'v':
-                printf("cbsh - version 0.3\n");
+                printf("cbsh - version 0.4\n");
                 return 0;
             default:
                 return panic("unrecognized option", argv[i]);

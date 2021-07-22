@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cbsh.  If not, see <https://www.gnu.org/licenses/>.
 
-VERSION = 0.3
+VERSION = 0.4
 NAME	= cbsh
 
 PREFIX =
@@ -23,6 +23,6 @@ MANPREFIX = /usr/share/man
 CC = gcc
 LD = $(CC)
 CPPFLAGS =
-CFLAGS   = -Wextra -Wall -Os -g -fsanitize=address
-LDFLAGS  = # -s
-LDLIBS   = -lasan
+CFLAGS   = -Wextra -Wall -Os -g
+LDFLAGS  = -s
+LDLIBS   = 
