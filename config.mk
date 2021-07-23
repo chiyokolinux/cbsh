@@ -23,6 +23,6 @@ MANPREFIX = /usr/share/man
 CC = gcc
 LD = $(CC)
 CPPFLAGS =
-CFLAGS   = -Wextra -Wall -Os -g
-LDFLAGS  = -s
-LDLIBS   = 
+CFLAGS   = -Wextra -Wall -Os -g -fsanitize=address
+LDFLAGS  = # -s
+LDLIBS   = -lasan
